@@ -160,3 +160,5 @@ body.pwModalOpen{overflow:hidden}
 .pwCartSummary strong{font-size:22px;color:var(--dp-red,#c00000)}
 .is-disabled{opacity:.55;pointer-events:none}
 @media (max-width:980px){.pwCartSummary,.pwCartHead,.pwCartItem{flex-direction:column;align-items:flex-start}.pwCartItemRight{justify-items:start}}
+
+.pwCategoryLanding{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.pwCategoryLandingCard{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px;border-radius:18px;background:#fafafa;border:1px solid #ececec;color:#111;text-decoration:none;transition:transform .18s ease, box-shadow .18s ease}.pwCategoryLandingCard:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.08)}.pwSection--categoryPage{scroll-margin-top:24px}.pwCategoryHero{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;border-radius:18px;background:#fafafa;border:1px solid #ececec;margin-bottom:14px;flex-wrap:wrap}.pwCatalogPageLabel{font-weight:700;color:#333;margin-bottom:10px}.pwCategoryLandingCard strong{display:block;font-size:16px}.pwCategoryLandingCard span{font-size:13px;color:#666}
