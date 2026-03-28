@@ -1,0 +1,145 @@
+.paginaWebMod{display:flex;flex-direction:column;gap:16px}
+.pwHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px}
+.pwHead h1{margin:0 0 6px}
+.pwHeadActions{display:flex;gap:10px;flex-wrap:wrap}
+.pwLayout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:16px;align-items:start}
+.pwEditor,.pwPreviewWrap{min-width:0}
+.pwCard{padding:16px}
+.pwCardTitle{font-weight:800;margin-bottom:12px}
+.pwCardTitle--withMeta{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pwFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field--full{grid-column:1/-1}
+.pwPromoGrid{display:grid;grid-template-columns:1fr;gap:10px}
+.pwChecks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pwCheck{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid #ececec;border-radius:14px;background:#fff;transition:.18s ease}
+.pwCheck:hover{border-color:#f2b4b4;box-shadow:0 8px 18px rgba(0,0,0,.04)}
+.pwCheck--product{justify-content:space-between}
+.pwCheck input{margin-top:3px}
+.pwCheck strong{display:block}
+.pwCheck small{display:block;color:#666;margin-top:2px}
+.pwCheckThumb{width:50px;height:50px;border-radius:12px;border:1px solid #eee;background:#fafafa;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:11px;font-weight:700;color:#999;flex-shrink:0}
+.pwCheckThumb img{width:100%;height:100%;object-fit:cover}
+.pwSticky{position:sticky;top:14px}
+.pwPreview{border:1px solid #ececec;border-radius:22px;overflow:hidden;background:#fff}
+.pwTopBar{display:flex;justify-content:space-between;gap:10px;padding:10px 16px;background:#111;color:#fff;font-size:12px}
+.pwTopBar a{color:#fff;text-decoration:none;font-weight:700}
+.pwHero{padding:22px;background:linear-gradient(135deg,#fff,#f6f6f6);position:relative}
+.pwHeroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center}
+.pwHeroCopy{min-width:0}
+.pwBadge{display:inline-block;background:rgba(192,0,0,.08);color:var(--dp-red,#c00000);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:10px}
+.pwBrand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pwBrandLogo{width:58px;height:58px;border-radius:18px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:800;color:var(--dp-red,#c00000)}
+.pwBrandLogo img{width:100%;height:100%;object-fit:contain}
+.pwHero h2{margin:0 0 8px;font-size:28px;line-height:1.05}
+.pwHero p{margin:0;color:#444;max-width:60ch}
+.pwHeroActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.pwHeroVisual{display:grid;gap:12px}
+.pwHeroMedia{height:250px;border-radius:24px;background:#f0f0f0 center/cover no-repeat;border:1px solid #eee;box-shadow:0 16px 32px rgba(0,0,0,.08)}
+.pwPromoBanner{min-height:96px;border-radius:20px;background:linear-gradient(135deg,#2b2b2b,#111) center/cover no-repeat;color:#fff;padding:16px;display:flex;align-items:flex-end;border:1px solid rgba(255,255,255,.08)}
+.pwPromoBanner small{display:block;opacity:.8;margin-bottom:4px}
+.pwPrimaryBtn,.pwSecondaryBtn,.pwGhostBtn{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:12px;text-decoration:none;font-weight:700}
+.pwPrimaryBtn{background:var(--dp-red,#c00000);color:#fff}
+.pwSecondaryBtn{background:#fff;border:1px solid #ececec;color:#222}
+.pwGhostBtn{background:#fff;border:1px solid #ececec;color:#222;padding:10px 12px}
+.pwTrustRow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.pwStat{padding:12px;border-radius:16px;background:#fff;border:1px solid #eee;display:grid;gap:4px}
+.pwStat strong{font-size:18px;color:var(--dp-red,#c00000)}
+.pwStat span{font-size:12px;color:#666}
+.pwSection{padding:18px}
+.pwSectionHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:12px}
+.pwSectionHead h3{margin:0;font-size:18px}
+.pwGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pwGrid--memberships{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pwMiniCard{border:1px solid #ececec;border-radius:18px;padding:14px;background:#fff;display:grid;gap:8px}
+.pwMiniCard--membership{background:linear-gradient(180deg,#fff,#fafafa)}
+.pwMiniCard .price{font-weight:800;color:var(--dp-red,#c00000);font-size:18px}
+.pwMiniTag{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;background:#fff5f5;color:var(--dp-red,#c00000);font-size:11px;font-weight:800;width:max-content}
+.pwProductGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pwProductCard{display:grid;grid-template-columns:118px 1fr;gap:12px;border:1px solid #ececec;border-radius:18px;padding:12px;background:#fff}
+.pwProductMedia{height:118px;border-radius:14px;background:#f7f7f7;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #eee}
+.pwProductMedia img{width:100%;height:100%;object-fit:cover}
+.pwProductPlaceholder{font-size:12px;color:#999;font-weight:700}
+.pwProductBody{display:grid;gap:8px;align-content:start}
+.pwProductMeta{display:flex;gap:8px;flex-wrap:wrap}
+.pwChip{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#f5f5f5;color:#555;font-size:11px;font-weight:700}
+.pwProductPrice{font-weight:800;color:var(--dp-red,#c00000);font-size:18px}
+.pwPromoList{display:grid;gap:10px}
+.pwPromoList--cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pwPromoItem{padding:14px;border-radius:18px;background:#fff5f5;border:1px solid #ffd6d6;display:grid;gap:4px}
+.pwPromoItem small{color:#9a4a4a;text-transform:uppercase;font-weight:700;font-size:11px}
+.pwContact{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:18px;background:#fafafa;border-top:1px solid #eee}
+.pwEmpty{color:#777;font-size:13px;font-style:italic}
+@media (max-width: 1100px){.pwLayout{grid-template-columns:1fr}.pwSticky{position:static}}
+@media (max-width: 980px){.pwChecks,.pwFormGrid,.pwGrid,.pwGrid--memberships,.pwProductGrid,.pwPromoList--cards,.pwHeroGrid,.pwTrustRow{grid-template-columns:1fr}.pwProductCard{grid-template-columns:1fr}.pwContact{flex-direction:column;align-items:flex-start}.pwTopBar,.pwSectionHead{flex-direction:column;align-items:flex-start}}
+
+.pwUploadHint{margin-top:6px;font-size:12px;color:#777}
+.pwUploadPreview{margin-top:10px;min-height:56px;border:1px dashed #e2e2e2;border-radius:14px;padding:10px;background:#fafafa;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pwUploadPreview img{width:120px;height:68px;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#fff}
+.btn--xs{padding:8px 10px;font-size:12px}
+
+.pwPrimaryBtn--small{padding:10px 12px}
+.pwProductActions{display:flex;gap:8px;flex-wrap:wrap}
+.pwProductMedia--button{padding:0;cursor:pointer}
+.pwProductMedia--button:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(0,0,0,.06)}
+.pwModal[hidden]{display:none}
+.pwModal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px}
+.pwModalBackdrop{position:absolute;inset:0;background:rgba(0,0,0,.48)}
+.pwModalCard{position:relative;z-index:1;width:min(860px,96vw);background:#fff;border-radius:24px;border:1px solid #ececec;box-shadow:0 24px 60px rgba(0,0,0,.22);padding:18px}
+.pwModalClose{position:absolute;top:10px;right:10px;border:0;background:#fff;border-radius:999px;width:40px;height:40px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.pwDetailGrid{display:grid;grid-template-columns:minmax(240px,320px) 1fr;gap:18px;align-items:start}
+.pwDetailMedia{min-height:280px;border:1px solid #eee;border-radius:20px;background:#f7f7f7;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pwDetailMedia img{width:100%;height:100%;object-fit:cover}
+.pwDetailBody{display:grid;gap:10px;align-content:start;padding-top:10px}
+.pwDetailBody h3{margin:0;font-size:28px;line-height:1.05}
+.pwProductPlaceholder--large{font-size:42px}
+body.pwModalOpen{overflow:hidden}
+@media (max-width: 700px){.pwDetailGrid{grid-template-columns:1fr}.pwModalCard{padding:14px}.pwDetailMedia{min-height:220px}}
+
+.pwCategoryChips{display:flex;gap:8px;flex-wrap:wrap}
+.pwChip--accent{background:#fff5f5;color:var(--dp-red,#c00000)}
+.pwTopSellingGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.pwTopCard{border:1px solid #ececec;border-radius:18px;background:#fff;overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+.pwTopCardMedia{height:150px;background:#f7f7f7;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pwTopCardMedia img{width:100%;height:100%;object-fit:cover}
+.pwTopCardBody{padding:12px;display:grid;gap:6px}
+.pwCategoryBlocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pwCategoryBlock{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px;display:grid;gap:10px}
+.pwCategoryBlockHead{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.pwCategoryBlockHead h4{margin:0;font-size:16px}
+.pwCategoryBlockHead span{font-size:12px;color:#777}
+.pwCategoryMiniList{display:grid;gap:8px}
+.pwCategoryMiniItem{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid #eee}
+@media (max-width:980px){.pwTopSellingGrid,.pwCategoryBlocks{grid-template-columns:1fr}}
+
+.pwCatalogToolbar{display:grid;gap:10px;margin-bottom:16px}
+.pwCatalogSearch{width:100%;padding:12px 14px;border:1px solid #e3e3e3;border-radius:14px;background:#fff}
+.pwCatalogFilters{display:flex;flex-wrap:wrap;gap:8px}
+.pwFilterChip{border:1px solid #e3e3e3;background:#fff;border-radius:999px;padding:8px 12px;font-weight:700;color:#333;cursor:pointer}
+.pwFilterChip.is-active{background:var(--dp-red,#c00000);border-color:var(--dp-red,#c00000);color:#fff}
+.pwOfferGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pwOfferCard{padding:14px;border:1px solid #ffd9d9;border-radius:18px;background:#fff5f5;display:grid;gap:6px}
+.pwOfferCard small{font-weight:800;color:var(--dp-red,#c00000)}
+.pwOfferCard span{font-weight:800;color:var(--dp-red,#c00000)}
+.pwBrandStrip{display:flex;flex-wrap:wrap;gap:10px}
+.pwBrandChip{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;background:#f7f7f7;border:1px solid #ececec;font-weight:800;color:#444}
+[data-product-card][hidden],[data-membership-card][hidden]{display:none!important}
+@media (max-width:900px){.pwOfferGrid{grid-template-columns:1fr}}
+
+.pwCatalogPageLabel{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff5f5;color:var(--dp-red,#c00000);font-weight:700;font-size:12px;margin-bottom:12px}
+.pwStoreGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pwStoreGrid--top,.pwStoreGrid--new{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pwStoreCard{display:grid;gap:10px}
+.pwStoreCard .pwProductCard{height:100%}
+.pwStoreBadge{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:#fff1f1;color:var(--dp-red,#c00000);font-size:11px;font-weight:800;width:max-content}
+.pwStoreBadge--new{background:#eef8ee;color:#187a35}
+.pwProductMedia--button{cursor:pointer}
+.pwProductMedia--button:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.08)}
+@media (max-width:900px){.pwStoreGrid,.pwStoreGrid--top,.pwStoreGrid--new{grid-template-columns:1fr}}
+
+.pwTopBarLinks{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pwContactInfo{display:grid;gap:8px}
+.pwContactLinks{display:flex;gap:8px;flex-wrap:wrap}
+.pwSocialHandles{display:flex;gap:8px;flex-wrap:wrap;color:#666;font-size:12px}
+.pwSocialHandles span{padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ececec}
+.pwWhatsFloat{position:sticky;float:right;right:18px;bottom:18px;margin:0 18px 18px auto;display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;border-radius:999px;background:#1fa855;color:#fff;text-decoration:none;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}
+@media (max-width:980px){.pwContactLinks,.pwTopBarLinks,.pwSocialHandles{width:100%}.pwWhatsFloat{position:static;float:none;margin:0 18px 18px auto}}

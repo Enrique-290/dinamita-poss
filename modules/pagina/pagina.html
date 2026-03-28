@@ -1,0 +1,133 @@
+<section class="paginaWebMod">
+  <header class="pwHead card">
+    <div>
+      <h1>Página Web</h1>
+      <p class="muted">Administra la versión web de tu gym: inicio, banners, membresías, productos destacados, promociones y contacto.</p>
+    </div>
+    <div class="pwHeadActions">
+      <button class="btn btn--ghost" id="pw-reset" type="button">Restablecer</button>
+      <button class="btn btn--ghost" id="pw-download" type="button">Descargar página</button>
+      <button class="btn" id="pw-save" type="button">Guardar cambios</button>
+    </div>
+  </header>
+
+  <div class="pwLayout">
+    <div class="pwEditor">
+      <article class="card pwCard">
+        <div class="pwCardTitle">Inicio</div>
+        <div class="pwFormGrid">
+          <div class="field">
+            <label>Título principal</label>
+            <input class="input" id="pw-title" placeholder="Explota tu potencial">
+          </div>
+          <div class="field">
+            <label>Subtítulo</label>
+            <input class="input" id="pw-subtitle" placeholder="Entrena, compra suplementos y mejora tu rendimiento.">
+          </div>
+          <div class="field field--full">
+            <label>Frase corta</label>
+            <input class="input" id="pw-tagline" placeholder="Fuerza, disciplina y resultados reales.">
+          </div>
+          <div class="field field--full">
+            <label>Banner principal / imagen hero</label>
+            <input class="input" id="pw-heroImage" type="file" accept="image/*">
+            <div class="pwUploadHint">Sube una imagen desde tu dispositivo. Se guarda dentro de la app.</div>
+            <div id="pw-heroImagePreview" class="pwUploadPreview"></div>
+          </div>
+          <div class="field field--full">
+            <label>Banner secundario / promoción visual</label>
+            <input class="input" id="pw-secondaryImage" type="file" accept="image/*">
+            <div class="pwUploadHint">Sube una imagen desde tu dispositivo para la promo destacada.</div>
+            <div id="pw-secondaryImagePreview" class="pwUploadPreview"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card pwCard">
+        <div class="pwCardTitle">Contacto y acción</div>
+        <div class="pwFormGrid">
+          <div class="field">
+            <label>WhatsApp</label>
+            <input class="input" id="pw-whatsapp" placeholder="525612345678">
+          </div>
+          <div class="field">
+            <label>Texto botón principal</label>
+            <input class="input" id="pw-cta" placeholder="Escríbenos por WhatsApp">
+          </div>
+          <div class="field">
+            <label>Texto botón secundario</label>
+            <input class="input" id="pw-ctaSecondary" placeholder="Ver promociones">
+          </div>
+          <div class="field">
+            <label>Texto corto de confianza</label>
+            <input class="input" id="pw-trust" placeholder="Atención personalizada y ambiente real de entrenamiento.">
+          </div>
+          <div class="field field--full">
+            <label>Dirección visible</label>
+            <input class="input" id="pw-address" placeholder="Dirección del gym">
+          </div>
+          <div class="field">
+            <label>Teléfono visible</label>
+            <input class="input" id="pw-phone" placeholder="55 1234 5678">
+          </div>
+          <div class="field">
+            <label>Enlace Google Maps</label>
+            <input class="input" id="pw-maps" placeholder="https://maps.google.com/...">
+          </div>
+          <div class="field">
+            <label>Facebook</label>
+            <input class="input" id="pw-facebook" placeholder="https://facebook.com/...">
+          </div>
+          <div class="field">
+            <label>Instagram</label>
+            <input class="input" id="pw-instagram" placeholder="https://instagram.com/...">
+          </div>
+        </div>
+      </article>
+
+      <article class="card pwCard">
+        <div class="pwCardTitle">Membresías</div>
+        <p class="muted small">Se toman del catálogo de membresías actual. Activa las que quieras mostrar.</p>
+        <div id="pw-memberships" class="pwChecks"></div>
+      </article>
+
+      <article class="card pwCard">
+        <div class="pwCardTitle pwCardTitle--withMeta">
+          <span>Productos destacados</span>
+          <small id="pw-productsCount" class="muted">0 / 8</small>
+        </div>
+        <p class="muted small">Selecciona hasta 8 productos del inventario para mostrarlos en la página.</p>
+        <div class="field field--full">
+          <label>Buscar producto</label>
+          <input class="input" id="pw-productSearch" placeholder="Busca por nombre o categoría">
+        </div>
+        <div id="pw-products" class="pwChecks"></div>
+      </article>
+
+      <article class="card pwCard">
+        <div class="pwCardTitle">Promociones</div>
+        <div class="pwPromoGrid">
+          <div class="field">
+            <label>Promoción 1</label>
+            <input class="input" id="pw-promo1" placeholder="2x$500 en mensualidades">
+          </div>
+          <div class="field">
+            <label>Promoción 2</label>
+            <input class="input" id="pw-promo2" placeholder="Creatina + shaker a precio especial">
+          </div>
+          <div class="field">
+            <label>Promoción 3</label>
+            <input class="input" id="pw-promo3" placeholder="Entrena hoy y obtén promoción">
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="pwPreviewWrap">
+      <div class="card pwCard pwSticky">
+        <div class="pwCardTitle">Vista previa</div>
+        <div id="pw-preview" class="pwPreview"></div>
+      </div>
+    </aside>
+  </div>
+</section>
