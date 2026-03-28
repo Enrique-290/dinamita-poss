@@ -143,3 +143,20 @@ body.pwModalOpen{overflow:hidden}
 .pwSocialHandles span{padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #ececec}
 .pwWhatsFloat{position:sticky;float:right;right:18px;bottom:18px;margin:0 18px 18px auto;display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;border-radius:999px;background:#1fa855;color:#fff;text-decoration:none;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}
 @media (max-width:980px){.pwContactLinks,.pwTopBarLinks,.pwSocialHandles{width:100%}.pwWhatsFloat{position:static;float:none;margin:0 18px 18px auto}}
+
+
+.pwCartFloat{position:sticky;bottom:18px;z-index:5;margin:0 18px 18px auto;display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:999px;border:0;background:#111;color:#fff;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18);cursor:pointer}
+.pwCartFloat span{display:inline-flex;min-width:26px;height:26px;align-items:center;justify-content:center;border-radius:999px;background:var(--dp-red,#c00000);color:#fff;font-size:12px}
+.pwModalCard--cart{max-width:720px}
+.pwCartHead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+.pwCartList{display:grid;gap:10px;max-height:45vh;overflow:auto}
+.pwCartItem{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px;border:1px solid #ececec;border-radius:16px;background:#fafafa}
+.pwCartItem small{display:block;color:#777;margin-top:4px}
+.pwCartItemRight{display:grid;gap:8px;justify-items:end}
+.pwQty{display:flex;align-items:center;gap:8px}
+.pwQty button{width:30px;height:30px;border-radius:10px;border:1px solid #ddd;background:#fff;font-weight:800;cursor:pointer}
+.pwCartSummary{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #ececec}
+.pwCartSummary span{display:block;color:#666;font-size:12px}
+.pwCartSummary strong{font-size:22px;color:var(--dp-red,#c00000)}
+.is-disabled{opacity:.55;pointer-events:none}
+@media (max-width:980px){.pwCartSummary,.pwCartHead,.pwCartItem{flex-direction:column;align-items:flex-start}.pwCartItemRight{justify-items:start}}

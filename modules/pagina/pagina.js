@@ -21,7 +21,7 @@
     instagram: '',
     mapsUrl: '',
     membershipsVisible: catalog.slice(0,4).map(x=>x.id),
-    featuredProducts: products.slice(0,6).map(x=>x.id),
+    featuredProducts: products.slice(0,24).map(x=>x.id),
     promos: ['2x$500 en mensualidades','Creatina + shaker a precio especial','Promociones activas todo el mes']
   };
 
@@ -37,6 +37,119 @@
   }
 
   let page = getPageCfg();
+
+  let previewCart = [];
+
+  function getCartItemKey(kind, id){
+    return `${kind}:${id}`;
+  }
+
+  function addToCart(kind, id){
+    const collection = kind === 'membership' ? catalog : products;
+    const item = collection.find(x=> String(x.id) === String(id));
+    if(!item) return;
+    const key = getCartItemKey(kind, id);
+    const existing = previewCart.find(x=> x.key === key);
+    if(existing){
+      existing.qty += 1;
+    } else {
+      previewCart.push({
+        key,
+        kind,
+        id: item.id,
+        name: item.name,
+        price: Number(item.price || 0) || 0,
+        meta: kind === 'membership' ? `${Number(item.days||0)} días` : normalizeCategory(item),
+        qty: 1
+      });
+    }
+    renderCart();
+  }
+
+  function updateCartQty(key, delta){
+    const item = previewCart.find(x=> x.key === key);
+    if(!item) return;
+    item.qty += delta;
+    if(item.qty <= 0){
+      previewCart = previewCart.filter(x=> x.key !== key);
+    }
+    renderCart();
+  }
+
+  function clearCart(){
+    previewCart = [];
+    renderCart();
+  }
+
+  function cartTotals(){
+    const count = previewCart.reduce((acc,it)=>acc + Number(it.qty||0),0);
+    const total = previewCart.reduce((acc,it)=>acc + (Number(it.qty||0) * Number(it.price||0)),0);
+    return { count, total };
+  }
+
+  function cartWaText(){
+    const { total } = cartTotals();
+    const lines = previewCart.map(it=>`- ${it.name} x${it.qty} ${dpFmtMoney((it.qty||0)*(it.price||0))}`);
+    return `Hola, quiero hacer este pedido:%0A%0A${lines.join('%0A')}%0A%0ATotal: ${encodeURIComponent(dpFmtMoney(total))}`;
+  }
+
+  function renderCart(){
+    const badge = document.querySelector('#pw-cart-count');
+    const totalEls = document.querySelectorAll('[data-cart-total]');
+    const list = document.querySelector('#pw-cart-items');
+    const empty = document.querySelector('#pw-cart-empty');
+    const sendBtn = document.querySelector('#pw-cart-send');
+    const subtotal = document.querySelector('#pw-cart-total-value');
+    const { count, total } = cartTotals();
+    if(badge) badge.textContent = String(count);
+    totalEls.forEach(el=> el.textContent = dpFmtMoney(total));
+    if(subtotal) subtotal.textContent = dpFmtMoney(total);
+    if(list){
+      list.innerHTML = previewCart.map(it=>`
+        <div class="pwCartItem">
+          <div>
+            <strong>${safeText(it.name)}</strong>
+            <small>${safeText(it.meta||'')}</small>
+          </div>
+          <div class="pwCartItemRight">
+            <div class="pwQty">
+              <button type="button" data-cart-dec="${it.key}">−</button>
+              <span>${it.qty}</span>
+              <button type="button" data-cart-inc="${it.key}">+</button>
+            </div>
+            <strong>${dpFmtMoney((it.qty||0)*(it.price||0))}</strong>
+          </div>
+        </div>`).join('');
+    }
+    if(empty) empty.hidden = previewCart.length !== 0;
+    if(sendBtn){
+      if(previewCart.length){
+        sendBtn.href = waLink(decodeURIComponent(cartWaText()));
+        sendBtn.classList.remove('is-disabled');
+      } else {
+        sendBtn.href = '#';
+        sendBtn.classList.add('is-disabled');
+      }
+    }
+    document.querySelectorAll('[data-cart-inc]').forEach(btn=> btn.onclick = ()=> updateCartQty(btn.getAttribute('data-cart-inc'), 1));
+    document.querySelectorAll('[data-cart-dec]').forEach(btn=> btn.onclick = ()=> updateCartQty(btn.getAttribute('data-cart-dec'), -1));
+  }
+
+  function openCart(){
+    const modal = $('pw-cart-modal');
+    if(!modal) return;
+    modal.hidden = false;
+    document.body.classList.add('pwModalOpen');
+    renderCart();
+  }
+
+  function closeCart(){
+    const modal = $('pw-cart-modal');
+    if(!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('pwModalOpen');
+  }
+
 
   function setVal(id,val){ const el=$(id); if(el && el.type !== 'file') el.value = val ?? ''; }
   function safeText(v=''){ return String(v || '').replace(/[<>]/g,''); }
@@ -137,13 +250,13 @@
 
     wrap.querySelectorAll('input[type="checkbox"]').forEach(chk=>chk.addEventListener('change', ()=>{
       const checked = Array.from(wrap.querySelectorAll('input:checked')).map(x=>x.value);
-      if(checked.length > 8){
+      if(checked.length > 24){
         chk.checked = false;
-        alert('Máximo 8 productos destacados.');
+        alert('Máximo 24 productos para la página.');
         return;
       }
       const selectedGlobal = Array.from(document.querySelectorAll('#pw-products input:checked')).map(x=>x.value);
-      page.featuredProducts = Array.from(new Set(selectedGlobal)).slice(0,8);
+      page.featuredProducts = Array.from(new Set(selectedGlobal)).slice(0,24);
       updateProductsCount();
       renderPreview();
     }));
@@ -152,7 +265,7 @@
 
   function updateProductsCount(){
     const el = $('pw-productsCount');
-    if(el) el.textContent = `${(page.featuredProducts||[]).length} / 8`;
+    if(el) el.textContent = `${(page.featuredProducts||[]).length} / 24`;
   }
 
   function normalizeWhatsAppNumber(raw){
@@ -164,23 +277,10 @@
     return num;
   }
 
-  function waUrl(text){
+  function waLink(text){
     const num = normalizeWhatsAppNumber(page.whatsapp || page.phone || biz.phone || '');
-    if(!num) return '';
-    return `https://api.whatsapp.com/send/?phone=${num}&text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
-  }
-
-  function waAttr(text){
-    return String(text || 'Hola, quiero información de Dinamita Gym.').replace(/"/g, '&quot;');
-  }
-
-  function openWhatsApp(text){
-    const url = waUrl(text);
-    if(!url){
-      alert('Configura primero el número de WhatsApp o teléfono visible.');
-      return;
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if(!num) return '#';
+    return `https://wa.me/${num}?text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
   }
 
   function getProductImage(item){
@@ -217,7 +317,7 @@ Precio: ${dpFmtMoney(item.price || 0)}`;
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <div class="pwProductActions">
             <button class="pwGhostBtn" type="button" data-product-detail="${item.id}">Ver detalle</button>
-            <button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-wa-text="${waAttr(productWaText(item))}">WhatsApp</button>
+            <a class="pwPrimaryBtn pwPrimaryBtn--small" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">WhatsApp</a><button class="pwSecondaryBtn pwPrimaryBtn--small" type="button" data-add-cart="product:${item.id}">Agregar</button>
           </div>
         </div>
       </div>`;
@@ -334,7 +434,7 @@ function renderPreview(){
     target.innerHTML = `
       <div class="pwTopBar">
         <span>${safeText(page.trustText || '')}</span>
-        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<button class="pwInlineLink" type="button" data-wa-text="${waAttr('Hola, quiero información del gym.')}">WhatsApp</button></div>
+        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<a href="${waLink('Hola, quiero información del gym.') }" target="_blank" rel="noopener">WhatsApp</a></div>
       </div>
       <div class="pwHero">
         <div class="pwHeroGrid">
@@ -350,7 +450,7 @@ function renderPreview(){
             <h2>${safeText(page.title || '')}</h2>
             <p>${safeText(page.subtitle || '')}</p>
             <div class="pwHeroActions">
-              <button class="pwPrimaryBtn" type="button" data-wa-text="${waAttr('Hola, quiero información del gym y sus promociones.')}">${safeText(page.ctaText || 'Escríbenos')}</button>
+              <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información del gym y sus promociones.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
               <a class="pwSecondaryBtn" href="#pw-promos-preview">${safeText(page.ctaSecondary || 'Ver promociones')}</a>
             </div>
             <div class="pwTrustRow">
@@ -374,7 +474,7 @@ function renderPreview(){
       <section class="pwSection">
         <div class="pwSectionHead"><h3>Ofertas de la semana</h3><span class="muted">Empuja tus promociones y productos estrella</span></div>
         <div class="pwOfferGrid">
-          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><button class="pwGhostBtn" type="button" data-wa-text="${waAttr(productWaText(item))}">Pedir por WhatsApp</button></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
+          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><a class="pwGhostBtn" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">Pedir por WhatsApp</a></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
         </div>
       </section>
 
@@ -416,7 +516,7 @@ function renderPreview(){
               <div class="pwMiniTag">${Number(item.days||0)} días</div>
               <strong>${safeText(item.name)}</strong>
               <div class="price">${dpFmtMoney(item.price || 0)}</div>
-              <button class="pwGhostBtn" type="button" data-wa-text="${waAttr(membershipWaText(item))}">Solicitar info</button>
+              <div class="pwProductActions"><a class="pwGhostBtn" href="${waLink(membershipWaText(item)) }" target="_blank" rel="noopener">Solicitar info</a><button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-add-cart="membership:${item.id}">Agregar</button></div>
             </div>`).join('') : ''}
         </div>
         <div class="pwProductGrid">
@@ -461,22 +561,44 @@ function renderPreview(){
         </div>
       </div>
 
+      
+      <button class="pwCartFloat" id="pw-cart-open" type="button">🛒 Carrito <span id="pw-cart-count">0</span></button>
+      <div id="pw-cart-modal" class="pwModal" hidden>
+        <div class="pwModalBackdrop" data-close-cart></div>
+        <div class="pwModalCard pwModalCard--cart">
+          <button class="pwModalClose" type="button" data-close-cart>&times;</button>
+          <div class="pwCartHead">
+            <div>
+              <strong>Carrito de compra</strong>
+              <div class="muted">Arma tu pedido y envíalo por WhatsApp</div>
+            </div>
+            <button class="pwGhostBtn" type="button" id="pw-cart-clear">Vaciar</button>
+          </div>
+          <div id="pw-cart-empty" class="pwEmpty">Tu carrito está vacío.</div>
+          <div id="pw-cart-items" class="pwCartList"></div>
+          <div class="pwCartSummary">
+            <div><span>Total</span><strong id="pw-cart-total-value">$0.00</strong></div>
+            <a id="pw-cart-send" class="pwPrimaryBtn is-disabled" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+          </div>
+        </div>
+      </div>
+
       <section class="pwContact">
         <div class="pwContactInfo">
           <strong>Contacto</strong>
           <div>${safeText(page.address || biz.address || 'Agrega la dirección del gym.')}</div>
           <div>${safeText(contactPhone || 'Agrega tu teléfono visible.')}</div>
           <div class="pwContactLinks">
-            <button class="pwGhostBtn" type="button" data-wa-text="${waAttr('Hola, quiero información para entrenar o comprar productos.')}">WhatsApp</button>
+            <a class="pwGhostBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">WhatsApp</a>
             ${mapsUrl ? `<a class="pwGhostBtn" href="${mapsUrl}" target="_blank" rel="noopener">Cómo llegar</a>` : ''}
             ${facebookUrl ? `<a class="pwGhostBtn" href="${facebookUrl}" target="_blank" rel="noopener">Facebook</a>` : ''}
             ${instagramUrl ? `<a class="pwGhostBtn" href="${instagramUrl}" target="_blank" rel="noopener">Instagram</a>` : ''}
           </div>
           ${(facebookUrl || instagramUrl) ? `<div class="pwSocialHandles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}
         </div>
-        <button class="pwPrimaryBtn" type="button" data-wa-text="${waAttr('Hola, quiero información para entrenar o comprar productos.')}">${safeText(page.ctaText || 'Escríbenos')}</button>
+        <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
       </section>
-      <button class="pwWhatsFloat" type="button" data-wa-text="${waAttr('Hola, quiero información del gym y sus productos.')}" aria-label="WhatsApp">WhatsApp</button>
+      <a class="pwWhatsFloat" href="${waLink('Hola, quiero información del gym y sus productos.') }" target="_blank" rel="noopener" aria-label="WhatsApp">WhatsApp</a>
     `;
     bindPreviewInteractions(featured);
     initCatalogInteractions(target);
@@ -497,7 +619,7 @@ function renderPreview(){
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <p class="muted">Producto destacado de tu catálogo web. Ideal para compartir por WhatsApp.</p>
           <div class="pwProductActions">
-            <button class="pwPrimaryBtn" type="button" data-wa-text="${waAttr(productWaText(item))}">Comprar por WhatsApp</button>
+            <a class="pwPrimaryBtn" href="${waLink(productWaText(item))}" target="_blank" rel="noopener">Comprar por WhatsApp</a>
             <button class="pwGhostBtn" type="button" data-close-product-modal>Cerrar</button>
           </div>
         </div>
@@ -521,13 +643,19 @@ function renderPreview(){
     document.querySelectorAll('[data-close-product-modal]').forEach(btn=>{
       btn.onclick = closeProductDetail;
     });
-    document.querySelectorAll('[data-wa-text]').forEach(btn=>{
-      btn.onclick = (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        openWhatsApp(btn.getAttribute('data-wa-text') || 'Hola, quiero información de Dinamita Gym.');
+    document.querySelectorAll('[data-add-cart]').forEach(btn=>{
+      btn.onclick = ()=> {
+        const [kind,id] = String(btn.getAttribute('data-add-cart') || '').split(':');
+        if(kind && id) addToCart(kind, id);
       };
     });
+    $('pw-cart-open')?.addEventListener('click', openCart);
+    $('pw-cart-clear')?.addEventListener('click', clearCart);
+    document.querySelectorAll('[data-close-cart]').forEach(btn=> btn.onclick = closeCart);
+    $('pw-cart-send')?.addEventListener('click', (e)=>{
+      if(!previewCart.length){ e.preventDefault(); return; }
+    });
+    renderCart();
   }
 
   function bindInputs(){
@@ -610,7 +738,7 @@ function renderPreview(){
 
   function buildDownloadHtml(){
     const visibleMemberships = catalog.filter(x=>page.membershipsVisible.includes(x.id));
-    const featured = products.filter(x=>page.featuredProducts.includes(x.id)).slice(0,8);
+    const featured = products.filter(x=>page.featuredProducts.includes(x.id)).slice(0,24);
     const promos = (page.promos||[]).filter(Boolean);
     const sales = Array.isArray(state?.sales) ? state.sales : [];
     const topSellingMap = new Map();
@@ -646,15 +774,15 @@ function renderPreview(){
 </head>
 <body>
 <div class="top"><div class="wrap"><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div></div></div>
-<section class="hero"><div class="wrap hero-grid"><div><span class="badge">Página oficial</span><div class="brand"><div class="logo">${biz.logoDataUrl ? `<img src="${biz.logoDataUrl}" alt="logo">` : bizName.slice(0,2).toUpperCase()}</div><div><strong>${bizName}</strong><div style="color:#666;font-size:14px">${safeText(page.tagline || '')}</div></div></div><h1>${title}</h1><p>${safeText(page.subtitle || '')}</p><div class="actions"><a class="btn btn-primary" href="${waUrl('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos por WhatsApp')}</a><a class="btn btn-secondary" href="#promociones">${safeText(page.ctaSecondary || 'Ver promociones')}</a></div></div><div><div class="visual-main" style="background-image:url('${page.heroImage||''}')"></div><div class="visual-promo" style="background-image:url('${page.secondaryImage||''}')"><div><small>Promo destacada</small><div>${safeText(promos[0] || 'Tu promoción especial aquí')}</div></div></div></div></div></section>
-<section class="section"><div class="wrap"><div class="head"><h2>Membresías</h2></div><div class="grid3">${visibleMemberships.map(item=>`<article class="card"><span class="chip">${Number(item.days||0)} días</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><a class="btn btn-primary" href="${waUrl(membershipWaText(item))}" target="_blank">Me interesa</a></article>`).join('') || '<div class="card">Sin membresías visibles.</div>'}</div></div></section>
+<section class="hero"><div class="wrap hero-grid"><div><span class="badge">Página oficial</span><div class="brand"><div class="logo">${biz.logoDataUrl ? `<img src="${biz.logoDataUrl}" alt="logo">` : bizName.slice(0,2).toUpperCase()}</div><div><strong>${bizName}</strong><div style="color:#666;font-size:14px">${safeText(page.tagline || '')}</div></div></div><h1>${title}</h1><p>${safeText(page.subtitle || '')}</p><div class="actions"><a class="btn btn-primary" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos por WhatsApp')}</a><a class="btn btn-secondary" href="#promociones">${safeText(page.ctaSecondary || 'Ver promociones')}</a></div></div><div><div class="visual-main" style="background-image:url('${page.heroImage||''}')"></div><div class="visual-promo" style="background-image:url('${page.secondaryImage||''}')"><div><small>Promo destacada</small><div>${safeText(promos[0] || 'Tu promoción especial aquí')}</div></div></div></div></div></section>
+<section class="section"><div class="wrap"><div class="head"><h2>Membresías</h2></div><div class="grid3">${visibleMemberships.map(item=>`<article class="card"><span class="chip">${Number(item.days||0)} días</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><a class="btn btn-primary" href="${waLink(membershipWaText(item))}" target="_blank">Me interesa</a></article>`).join('') || '<div class="card">Sin membresías visibles.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Lo más vendido</h2></div><div class="topgrid">${topSelling.map(({item,sold})=>`<article class="topcard"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:'IMG'}</div><div class="topbody"><span class="chip">Top venta</span><strong>${safeText(item.name)}</strong><small>${sold} piezas vendidas</small><div class="price">${dpFmtMoney(item.price||0)}</div></div></article>`).join('') || '<div class="card">Sin historial suficiente.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Categorías</h2></div><div class="cats">${categories.map(cat=>`<span class="chip">${safeText(cat)}</span>`).join('') || '<span class="chip">Sin categorías</span>'}</div></div></section>
-<section class="section"><div class="wrap"><div class="head"><h2>Productos destacados</h2><small>Selección principal del catálogo</small></div><div class="grid2">${featuredSorted.slice(0,4).map(item=>`<article class="product"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:productFallback(item)}</div><div><span class="chip">${normalizeCategory(item)}</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><a class="btn btn-primary" href="${waUrl(productWaText(item))}" target="_blank">Comprar por WhatsApp</a></div></div></article>`).join('') || '<div class="card">Sin productos destacados.</div>'}</div></div></section>
+<section class="section"><div class="wrap"><div class="head"><h2>Productos destacados</h2><small>Selección principal del catálogo</small></div><div class="grid2">${featuredSorted.slice(0,4).map(item=>`<article class="product"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:productFallback(item)}</div><div><span class="chip">${normalizeCategory(item)}</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><a class="btn btn-primary" href="${waLink(productWaText(item))}" target="_blank">Comprar por WhatsApp</a></div></div></article>`).join('') || '<div class="card">Sin productos destacados.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Nuevos ingresos</h2><small>Novedades y productos listos para mover</small></div><div class="topgrid">${newestProducts.map(item=>`<article class="topcard"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:'IMG'}</div><div class="topbody"><span class="chip">Nuevo</span><strong>${safeText(item.name)}</strong><small>${safeText(normalizeCategory(item))}</small><div class="price">${dpFmtMoney(item.price||0)}</div></div></article>`).join('') || '<div class="card">Sin productos nuevos.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Catálogo por categoría</h2></div>${categories.map(cat=>`<article class="card" style="margin-bottom:12px"><div class="head"><h2 style="font-size:18px">${safeText(cat)}</h2><small>Mini página de categoría</small></div><div class="mini-list">${featuredSorted.filter(item=>normalizeCategory(item)===cat).map(item=>`<div class="mini-item"><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price||0)}</span></div>`).join('')}</div></article>`).join('') || '<div class="card">Sin categorías.</div>'}</div></section>
 <section class="section" id="promociones"><div class="wrap"><div class="head"><h2>Promociones</h2></div><div class="promos">${promos.map((text,idx)=>`<article class="promo"><small>Promo ${idx+1}</small><strong>${safeText(text)}</strong></article>`).join('') || '<div class="card">Sin promociones.</div>'}</div></div></section>
-<section class="contact"><div class="wrap" style="display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><strong>Contacto</strong><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div><div class="contact-links"><a class="btn btn-ghost" href="${waUrl('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">WhatsApp</a>${mapsUrl ? `<a class="btn btn-ghost" href="${mapsUrl}" target="_blank">Cómo llegar</a>` : ''}${facebookUrl ? `<a class="btn btn-ghost" href="${facebookUrl}" target="_blank">Facebook</a>` : ''}${instagramUrl ? `<a class="btn btn-ghost" href="${instagramUrl}" target="_blank">Instagram</a>` : ''}</div>${(facebookUrl || instagramUrl) ? `<div class="social-handles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}</div><a class="btn btn-primary" href="${waUrl('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos')}</a></div></section><a class="wa-float" href="${waUrl('Hola, quiero información del gym y sus productos.')}" target="_blank">WhatsApp</a>
+<section class="contact"><div class="wrap" style="display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><strong>Contacto</strong><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div><div class="contact-links"><a class="btn btn-ghost" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">WhatsApp</a>${mapsUrl ? `<a class="btn btn-ghost" href="${mapsUrl}" target="_blank">Cómo llegar</a>` : ''}${facebookUrl ? `<a class="btn btn-ghost" href="${facebookUrl}" target="_blank">Facebook</a>` : ''}${instagramUrl ? `<a class="btn btn-ghost" href="${instagramUrl}" target="_blank">Instagram</a>` : ''}</div>${(facebookUrl || instagramUrl) ? `<div class="social-handles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}</div><a class="btn btn-primary" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos')}</a></div></section><a class="wa-float" href="${waLink('Hola, quiero información del gym y sus productos.')}" target="_blank">WhatsApp</a>
 <script>(function(){const search=document.getElementById('catalog-search');const chips=[...document.querySelectorAll('[data-filter]')];const p=[...document.querySelectorAll('[data-product-card]')];const m=[...document.querySelectorAll('[data-membership-card]')];const empty=document.getElementById('catalog-empty');let filter='Todo';function apply(){const q=(search?.value||'').trim().toLowerCase();let visible=0;p.forEach(card=>{const name=(card.dataset.name||'').toLowerCase();const cat=(card.dataset.category||'');const show=(filter==='Todo'||filter===cat)&&(!q||name.includes(q)||cat.toLowerCase().includes(q));card.hidden=!show;if(show)visible++;});m.forEach(card=>{const name=(card.dataset.name||'').toLowerCase();const show=(filter==='Todo'||filter==='Membresías')&&(!q||name.includes(q)||'membresías'.includes(q)||'membresias'.includes(q));card.hidden=!show;if(show)visible++;});if(empty)empty.hidden=visible!==0;}search&&search.addEventListener('input',apply);chips.forEach(ch=>ch.addEventListener('click',()=>{filter=ch.dataset.filter||'Todo';chips.forEach(x=>x.classList.toggle('active',x===ch));apply();}));apply();})();</script></body></html>`;
   }
 
@@ -692,7 +820,7 @@ function renderPreview(){
         instagram: page.instagram,
         mapsUrl: page.mapsUrl,
         membershipsVisible: (page.membershipsVisible || []).slice(),
-        featuredProducts: (page.featuredProducts || []).slice(0,8),
+        featuredProducts: (page.featuredProducts || []).slice(0,24),
         promos: (page.promos || []).slice(0,3)
       };
       return st;
