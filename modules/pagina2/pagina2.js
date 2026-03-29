@@ -9,13 +9,14 @@
       trust:'Atención personalizada, catálogo ordenado y base lista para crecer.'
     },
     banners:{heroText:'Promo principal', secondaryText:'Promo secundaria'},
-    catalogo:{limit:12},
+    catalogo:{limit:24, featuredCount:4, topCount:4, newCount:4},
     categorias:[],
     promociones:['2x1 en membresías','Creatina + shaker','Promoción de la semana'],
     contacto:{whatsapp:'',phone:defaultBiz.phone||'',address:defaultBiz.address||''}
   };
 
   function clone(v){ return JSON.parse(JSON.stringify(v)); }
+  function money(v){ return typeof dpFmtMoney==='function' ? dpFmtMoney(v||0) : '$'+Number(v||0).toFixed(2); }
 
   function normalizeProducts(raw){
     return (Array.isArray(raw)?raw:[]).map((p,idx)=>({
@@ -25,14 +26,14 @@
       category: String(p?.category || p?.brand || 'General').trim() || 'General',
       stock: Number(p?.stock || 0),
       image: p?.image || p?.imageUrl || '',
-      isNew: idx < 3,
-      isOffer: Number(p?.price||0) > 0 && idx % 4 === 0,
-      sold: Math.max(0, Number(p?.sold || p?.qtySold || 0)) || (idx===0?12:idx===1?8:idx===2?6:0)
-    }));
+      isNew: p?.isNew ?? (idx < 6),
+      isOffer: p?.isOffer ?? (Number(p?.price||0) > 0 && idx % 4 === 0),
+      sold: Math.max(0, Number(p?.sold || p?.qtySold || 0)) || (idx===0?12:idx===1?8:idx===2?6:idx===3?5:0),
+      featured: p?.featured ?? (idx < 8)
+    })).filter(p=>p.name);
   }
 
   function getState(){ return typeof dpGetState==='function' ? dpGetState() : {}; }
-
   function detectCategories(products){
     return Array.from(new Set(products.map(p=>p.category).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'es'));
   }
@@ -54,6 +55,7 @@
   }
 
   let page2 = getCfg();
+  let currentCategory = 'Todos';
 
   function saveCfg(){
     if(typeof dpSetState!=='function') return;
@@ -62,6 +64,27 @@
       st.config.website2 = clone(page2);
       return st;
     });
+  }
+
+  function productCard(p, tag=''){
+    const badge = tag ? `<span class="pg2CardBadge">${tag}</span>` : '';
+    const img = p.image
+      ? `<img src="${p.image}" alt="${p.name}" class="pg2CardImg">`
+      : `<div class="pg2CardImg pg2CardImg--placeholder">${(p.name||'P').slice(0,1).toUpperCase()}</div>`;
+    return `
+      <article class="pg2Card">
+        ${badge}
+        ${img}
+        <div class="pg2CardBody">
+          <strong>${p.name}</strong>
+          <div class="pg2CardMeta">${p.category} · Stock ${p.stock}</div>
+          <div class="pg2CardPrice">${money(p.price||0)}</div>
+          <div class="pg2CardActions">
+            <button class="btn btn--ghost" type="button">Detalle</button>
+            <button class="btn" type="button">WhatsApp</button>
+          </div>
+        </div>
+      </article>`;
   }
 
   function renderHeader(ctx){
@@ -90,8 +113,9 @@
   }
 
   function renderCategorias(ctx){
-    const chips = ctx.categories.length
-      ? ctx.categories.map(c=>`<button class="pg2__chipBtn" type="button">${c}</button>`).join('')
+    const all = ['Todos', ...ctx.categories];
+    const chips = all.length
+      ? all.map(c=>`<button class="pg2__chipBtn ${currentCategory===c?'active':''}" data-cat="${c}" type="button">${c}</button>`).join('')
       : '<span class="muted">Sin categorías detectadas.</span>';
     return `
       <section class="pg2Block">
@@ -100,43 +124,37 @@
       </section>`;
   }
 
-  function productCard(p, tag=''){
-    const badge = tag ? `<span class="pg2CardBadge">${tag}</span>` : '';
-    const img = p.image
-      ? `<img src="${p.image}" alt="${p.name}" class="pg2CardImg">`
-      : `<div class="pg2CardImg pg2CardImg--placeholder">${(p.name||'P').slice(0,1).toUpperCase()}</div>`;
+  function renderCardsSection(title, items, chip=''){
     return `
-      <article class="pg2Card">
-        ${badge}
-        ${img}
-        <div class="pg2CardBody">
-          <strong>${p.name}</strong>
-          <div class="pg2CardMeta">${p.category}</div>
-          <div class="pg2CardPrice">${typeof dpFmtMoney==='function' ? dpFmtMoney(p.price||0) : '$'+(p.price||0)}</div>
-          <div class="pg2CardActions">
-            <button class="btn btn--ghost" type="button">Detalle</button>
-            <button class="btn" type="button">WhatsApp</button>
-          </div>
-        </div>
-      </article>`;
+      <section class="pg2Block">
+        <div class="pg2SectionHead"><h3>${title}</h3><span>${items.length} productos</span></div>
+        <div class="pg2Cards">${items.length ? items.map(p=>productCard(p, chip)).join('') : '<div class="muted">No hay productos para mostrar.</div>'}</div>
+      </section>`;
   }
 
   function renderDestacados(ctx){
-    const items = ctx.products.slice(0, Math.min(ctx.catalogo.limit || 12, 4));
-    return `
-      <section class="pg2Block">
-        <div class="pg2SectionHead"><h3>Productos destacados</h3><span>${items.length} visibles</span></div>
-        <div class="pg2Cards">${items.length ? items.map(p=>productCard(p,'Destacado')).join('') : '<div class="muted">No hay productos cargados.</div>'}</div>
-      </section>`;
+    const featured = ctx.products.filter(p=>p.featured).slice(0, ctx.catalogo.featuredCount || 4);
+    return renderCardsSection('Productos destacados', featured, 'Destacado');
+  }
+
+  function renderMasVendidos(ctx){
+    const top = [...ctx.products].sort((a,b)=>b.sold-a.sold).filter(p=>p.sold>0).slice(0, ctx.catalogo.topCount || 4);
+    return renderCardsSection('Lo más vendido', top, 'Top');
   }
 
   function renderCatalogo(ctx){
-    const items = ctx.products.slice(0, Math.min(ctx.catalogo.limit || 12, 8));
+    const base = currentCategory==='Todos' ? ctx.products : ctx.products.filter(p=>p.category===currentCategory);
+    const items = base.slice(0, Math.max(1, ctx.catalogo.limit || 24));
     return `
       <section class="pg2Block">
-        <div class="pg2SectionHead"><h3>Catálogo base</h3><span>${ctx.products.length} productos en TPV</span></div>
-        <div class="pg2Cards">${items.length ? items.map(p=>productCard(p)).join('') : '<div class="muted">No hay productos cargados.</div>'}</div>
+        <div class="pg2SectionHead"><h3>Catálogo</h3><span>Vista actual: ${currentCategory}</span></div>
+        <div class="pg2Cards">${items.length ? items.map(p=>productCard(p)).join('') : '<div class="muted">No hay productos en esta categoría.</div>'}</div>
       </section>`;
+  }
+
+  function renderNuevos(ctx){
+    const items = ctx.products.filter(p=>p.isNew).slice(0, ctx.catalogo.newCount || 4);
+    return renderCardsSection('Nuevos productos', items, 'Nuevo');
   }
 
   function renderContacto(ctx){
@@ -153,31 +171,49 @@
   function renderFooter(ctx){
     return `
       <section class="pg2Block pg2FooterBlock">
-        <div>Vista previa modular estable · siguiente paso: carrito y categorías reales.</div>
+        <div>Página 2.0 · Catálogo y categorías reales activos.</div>
         <div><strong>${ctx.general.businessName || 'Dinamita Gym'}</strong></div>
       </section>`;
+  }
+
+  function getCtx(){
+    const st = getState();
+    const products = normalizeProducts(st?.products);
+    const categories = detectCategories(products);
+    if(currentCategory!=='Todos' && !categories.includes(currentCategory)) currentCategory='Todos';
+    return {
+      ...page2,
+      products,
+      categories,
+      catalogo: {...defaultData.catalogo, ...(page2.catalogo||{})}
+    };
+  }
+
+  function bindPreviewEvents(){
+    document.querySelectorAll('#pg2-preview [data-cat]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        currentCategory = btn.dataset.cat || 'Todos';
+        renderPreview();
+      });
+    });
   }
 
   function renderPreview(){
     const preview = $('pg2-preview');
     if(!preview) return;
-    const st = getState();
-    const products = normalizeProducts(st?.products);
-    const ctx = {
-      ...page2,
-      products,
-      categories: detectCategories(products),
-      catalogo: {...defaultData.catalogo, ...(page2.catalogo||{})}
-    };
+    const ctx = getCtx();
     preview.innerHTML = [
       renderHeader(ctx),
       renderHero(ctx),
       renderCategorias(ctx),
       renderDestacados(ctx),
+      renderMasVendidos(ctx),
+      renderNuevos(ctx),
       renderCatalogo(ctx),
       renderContacto(ctx),
       renderFooter(ctx)
     ].join('');
+    bindPreviewEvents();
   }
 
   function bindTabs(){
@@ -202,6 +238,10 @@
     $('pg2-whatsapp').value = page2.contacto.whatsapp || '';
     $('pg2-phone').value = page2.contacto.phone || '';
     $('pg2-address').value = page2.contacto.address || '';
+    $('pg2-limit').value = page2.catalogo.limit || 24;
+    $('pg2-featuredCount').value = page2.catalogo.featuredCount || 4;
+    $('pg2-topCount').value = page2.catalogo.topCount || 4;
+    $('pg2-newCount').value = page2.catalogo.newCount || 4;
     const products = normalizeProducts(getState()?.products);
     const cats = detectCategories(products);
     $('pg2-productsCount').textContent = String(products.length);
@@ -219,16 +259,20 @@
     page2.contacto.whatsapp = $('pg2-whatsapp').value.trim();
     page2.contacto.phone = $('pg2-phone').value.trim();
     page2.contacto.address = $('pg2-address').value.trim();
+    page2.catalogo.limit = Math.max(1, Number($('pg2-limit').value || 24));
+    page2.catalogo.featuredCount = Math.max(1, Number($('pg2-featuredCount').value || 4));
+    page2.catalogo.topCount = Math.max(1, Number($('pg2-topCount').value || 4));
+    page2.catalogo.newCount = Math.max(1, Number($('pg2-newCount').value || 4));
     page2.categorias = detectCategories(normalizeProducts(getState()?.products));
   }
 
   function bindInputs(){
-    ['pg2-businessName','pg2-title','pg2-subtitle','pg2-trust','pg2-heroText','pg2-secondaryText','pg2-promo1','pg2-promo2','pg2-promo3','pg2-whatsapp','pg2-phone','pg2-address'].forEach(id=>{
+    ['pg2-businessName','pg2-title','pg2-subtitle','pg2-trust','pg2-heroText','pg2-secondaryText','pg2-promo1','pg2-promo2','pg2-promo3','pg2-whatsapp','pg2-phone','pg2-address','pg2-limit','pg2-featuredCount','pg2-topCount','pg2-newCount'].forEach(id=>{
       const el=$(id); if(!el) return;
       el.addEventListener('input', ()=>{ readForm(); renderPreview(); });
     });
-    $('pg2-save')?.addEventListener('click', ()=>{ readForm(); saveCfg(); alert('Página 2.0 · base modular guardada.'); });
-    $('pg2-reset')?.addEventListener('click', ()=>{ page2 = clone(defaultData); fillForm(); renderPreview(); saveCfg(); });
+    $('pg2-save')?.addEventListener('click', ()=>{ readForm(); saveCfg(); alert('Página 2.0 · catálogo y categorías guardados.'); });
+    $('pg2-reset')?.addEventListener('click', ()=>{ page2 = clone(defaultData); currentCategory='Todos'; fillForm(); renderPreview(); saveCfg(); });
   }
 
   bindTabs();

@@ -43,13 +43,21 @@
         </section>
 
         <section class="pg2__panel" data-panel="catalogo">
-          <p class="muted">Catálogo base para Página 2.0. Aquí vive la lógica futura de destacados, más vendidos y nuevos.</p>
+          <p class="muted">Catálogo real de Página 2.0 con destacados, más vendidos, nuevos y límite configurable.</p>
           <div class="pg2__infoList">
             <div><strong>Preview modular:</strong> activo</div>
             <div><strong>Productos en TPV:</strong> <span id="pg2-productsCount">0</span></div>
-            <div><strong>Base modular:</strong> activa</div>
+            <div><strong>Categorías reales:</strong> activas</div>
             <div><strong>Carrito 2.0:</strong> pendiente en V25.3</div>
           </div>
+          <label>Límite de catálogo visible</label>
+          <input id="pg2-limit" class="input" type="number" min="1" max="120" value="24">
+          <label>Destacados visibles</label>
+          <input id="pg2-featuredCount" class="input" type="number" min="1" max="12" value="4">
+          <label>Lo más vendido visibles</label>
+          <input id="pg2-topCount" class="input" type="number" min="1" max="12" value="4">
+          <label>Nuevos visibles</label>
+          <input id="pg2-newCount" class="input" type="number" min="1" max="12" value="4">
         </section>
 
         <section class="pg2__panel" data-panel="categorias">
@@ -93,7 +101,7 @@
     <section class="pg2__preview card">
       <div class="pg2__previewHead">
         <h3>Vista previa modular</h3>
-        <span class="pg2__previewTag">V25.0</span>
+        <span class="pg2__previewTag">V25.2</span>
       </div>
       <div id="pg2-preview" class="pg2__previewCanvas"></div>
     </section>
