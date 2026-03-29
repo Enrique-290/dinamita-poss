@@ -21,7 +21,7 @@
     instagram: '',
     mapsUrl: '',
     membershipsVisible: catalog.slice(0,4).map(x=>x.id),
-    featuredProducts: products.slice(0,120).map(x=>x.id),
+    featuredProducts: products.slice(0,6).map(x=>x.id),
     promos: ['2x$500 en mensualidades','Creatina + shaker a precio especial','Promociones activas todo el mes']
   };
 
@@ -37,122 +37,6 @@
   }
 
   let page = getPageCfg();
-
-  let previewCart = [];
-
-  function getCartItemKey(kind, id){
-    return `${kind}:${id}`;
-  }
-
-  function addToCart(kind, id){
-    const collection = kind === 'membership' ? catalog : products;
-    const item = collection.find(x=> String(x.id) === String(id));
-    if(!item) return;
-    const key = getCartItemKey(kind, id);
-    const existing = previewCart.find(x=> x.key === key);
-    if(existing){
-      existing.qty += 1;
-    } else {
-      previewCart.push({
-        key,
-        kind,
-        id: item.id,
-        name: item.name,
-        price: Number(item.price || 0) || 0,
-        meta: kind === 'membership' ? `${Number(item.days||0)} días` : normalizeCategory(item),
-        qty: 1
-      });
-    }
-    renderCart();
-  }
-
-  function updateCartQty(key, delta){
-    const item = previewCart.find(x=> x.key === key);
-    if(!item) return;
-    item.qty += delta;
-    if(item.qty <= 0){
-      previewCart = previewCart.filter(x=> x.key !== key);
-    }
-    renderCart();
-  }
-
-  function clearCart(){
-    previewCart = [];
-    renderCart();
-  }
-
-  function cartTotals(){
-    const count = previewCart.reduce((acc,it)=>acc + Number(it.qty||0),0);
-    const total = previewCart.reduce((acc,it)=>acc + (Number(it.qty||0) * Number(it.price||0)),0);
-    return { count, total };
-  }
-
-  function cartWaText(){
-    const { total } = cartTotals();
-    const lines = previewCart.map(it=>`- ${it.name} x${it.qty} ${dpFmtMoney((it.qty||0)*(it.price||0))}`);
-    return `Hola, quiero hacer este pedido:
-
-${lines.join('
-')}
-
-Total: ${dpFmtMoney(total)}`;
-  }
-
-  function renderCart(){
-    const badge = document.querySelector('#pw-cart-count');
-    const totalEls = document.querySelectorAll('[data-cart-total]');
-    const list = document.querySelector('#pw-cart-items');
-    const empty = document.querySelector('#pw-cart-empty');
-    const sendBtn = document.querySelector('#pw-cart-send');
-    const subtotal = document.querySelector('#pw-cart-total-value');
-    const { count, total } = cartTotals();
-    if(badge) badge.textContent = String(count);
-    totalEls.forEach(el=> el.textContent = dpFmtMoney(total));
-    if(subtotal) subtotal.textContent = dpFmtMoney(total);
-    if(list){
-      list.innerHTML = previewCart.map(it=>`
-        <div class="pwCartItem">
-          <div>
-            <strong>${safeText(it.name)}</strong>
-            <small>${safeText(it.meta||'')}</small>
-          </div>
-          <div class="pwCartItemRight">
-            <div class="pwQty">
-              <button type="button" data-cart-dec="${it.key}">−</button>
-              <span>${it.qty}</span>
-              <button type="button" data-cart-inc="${it.key}">+</button>
-            </div>
-            <strong>${dpFmtMoney((it.qty||0)*(it.price||0))}</strong>
-          </div>
-        </div>`).join('');
-    }
-    if(empty) empty.hidden = previewCart.length !== 0;
-    if(sendBtn){
-      if(previewCart.length){
-        sendBtn.classList.remove('is-disabled');
-      } else {
-        sendBtn.classList.add('is-disabled');
-      }
-    }
-    document.querySelectorAll('[data-cart-inc]').forEach(btn=> btn.onclick = ()=> updateCartQty(btn.getAttribute('data-cart-inc'), 1));
-    document.querySelectorAll('[data-cart-dec]').forEach(btn=> btn.onclick = ()=> updateCartQty(btn.getAttribute('data-cart-dec'), -1));
-  }
-
-  function openCart(){
-    const modal = $('pw-cart-modal');
-    if(!modal) return;
-    modal.hidden = false;
-    document.body.classList.add('pwModalOpen');
-    renderCart();
-  }
-
-  function closeCart(){
-    const modal = $('pw-cart-modal');
-    if(!modal) return;
-    modal.hidden = true;
-    document.body.classList.remove('pwModalOpen');
-  }
-
 
   function setVal(id,val){ const el=$(id); if(el && el.type !== 'file') el.value = val ?? ''; }
   function safeText(v=''){ return String(v || '').replace(/[<>]/g,''); }
@@ -220,40 +104,6 @@ Total: ${dpFmtMoney(total)}`;
     return Array.from(new Set((items||[]).map(normalizeCategory).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
   }
 
-  function slugifyCategory(value){
-    return String(value || '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g,'-')
-      .replace(/^-+|-+$/g,'') || 'categoria';
-  }
-
-  function buildCategorySections(items){
-    const categories = getAllCategories(items);
-    return categories.map(cat=>{
-      const slug = slugifyCategory(cat);
-      const catItems = items.filter(item => normalizeCategory(item) === cat);
-      return `
-      <section id="cat-${slug}" class="pwSection pwSection--categoryPage">
-        <div class="pwSectionHead">
-          <h3>${safeText(cat)}</h3>
-          <a class="pwGhostBtn" href="#pw-catalog-home">Volver al catálogo</a>
-        </div>
-        <div class="pwCategoryHero">
-          <div>
-            <small class="muted">Categoría</small>
-            <strong>${safeText(cat)}</strong>
-            <p class="muted">Explora todos los productos disponibles de esta categoría.</p>
-          </div>
-          <span class="pwChip">${catItems.length} producto${catItems.length===1?'':'s'}</span>
-        </div>
-        <div class="pwProductGrid">
-          ${catItems.map(item=>`<div data-product-card data-name="${safeText(item.name)}" data-category="${normalizeCategory(item)}">${productCard(item)}</div>`).join('')}
-        </div>
-      </section>`;
-    }).join('');
-  }
-
   function getTopSellingItems(limit=4){
     const mostSold = state?.analytics?.mostSold || {};
     const ranked = products
@@ -287,13 +137,13 @@ Total: ${dpFmtMoney(total)}`;
 
     wrap.querySelectorAll('input[type="checkbox"]').forEach(chk=>chk.addEventListener('change', ()=>{
       const checked = Array.from(wrap.querySelectorAll('input:checked')).map(x=>x.value);
-      if(checked.length > 120){
+      if(checked.length > 8){
         chk.checked = false;
-        alert('Máximo 120 productos para la página.');
+        alert('Máximo 8 productos destacados.');
         return;
       }
       const selectedGlobal = Array.from(document.querySelectorAll('#pw-products input:checked')).map(x=>x.value);
-      page.featuredProducts = Array.from(new Set(selectedGlobal)).slice(0,120);
+      page.featuredProducts = Array.from(new Set(selectedGlobal)).slice(0,8);
       updateProductsCount();
       renderPreview();
     }));
@@ -302,7 +152,7 @@ Total: ${dpFmtMoney(total)}`;
 
   function updateProductsCount(){
     const el = $('pw-productsCount');
-    if(el) el.textContent = `${(page.featuredProducts||[]).length} / 120`;
+    if(el) el.textContent = `${(page.featuredProducts||[]).length} / 8`;
   }
 
   function normalizeWhatsAppNumber(raw){
@@ -317,16 +167,7 @@ Total: ${dpFmtMoney(total)}`;
   function waLink(text){
     const num = normalizeWhatsAppNumber(page.whatsapp || page.phone || biz.phone || '');
     if(!num) return '#';
-    return `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
-  }
-
-  function openWhatsApp(text){
-    const url = waLink(text);
-    if(!url || url === '#'){
-      alert('Configura un teléfono o WhatsApp válido en Página Web.');
-      return;
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return `https://wa.me/${num}?text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
   }
 
   function getProductImage(item){
@@ -363,7 +204,7 @@ Precio: ${dpFmtMoney(item.price || 0)}`;
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <div class="pwProductActions">
             <button class="pwGhostBtn" type="button" data-product-detail="${item.id}">Ver detalle</button>
-            <button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-wa-message="${safeText(productWaText(item))}">WhatsApp</button><button class="pwSecondaryBtn pwPrimaryBtn--small" type="button" data-add-cart="product:${item.id}">Agregar</button>
+            <a class="pwPrimaryBtn pwPrimaryBtn--small" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">WhatsApp</a>
           </div>
         </div>
       </div>`;
@@ -480,7 +321,7 @@ function renderPreview(){
     target.innerHTML = `
       <div class="pwTopBar">
         <span>${safeText(page.trustText || '')}</span>
-        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<button type="button" class="pwTopWaBtn" data-wa-message="Hola, quiero información del gym.">WhatsApp</button></div>
+        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<a href="${waLink('Hola, quiero información del gym.') }" target="_blank" rel="noopener">WhatsApp</a></div>
       </div>
       <div class="pwHero">
         <div class="pwHeroGrid">
@@ -496,7 +337,7 @@ function renderPreview(){
             <h2>${safeText(page.title || '')}</h2>
             <p>${safeText(page.subtitle || '')}</p>
             <div class="pwHeroActions">
-              <button class="pwPrimaryBtn" type="button" data-wa-message="Hola, quiero información del gym y sus promociones.">${safeText(page.ctaText || 'Escríbenos')}</button>
+              <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información del gym y sus promociones.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
               <a class="pwSecondaryBtn" href="#pw-promos-preview">${safeText(page.ctaSecondary || 'Ver promociones')}</a>
             </div>
             <div class="pwTrustRow">
@@ -520,7 +361,7 @@ function renderPreview(){
       <section class="pwSection">
         <div class="pwSectionHead"><h3>Ofertas de la semana</h3><span class="muted">Empuja tus promociones y productos estrella</span></div>
         <div class="pwOfferGrid">
-          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><button class="pwGhostBtn" type="button" data-wa-message="${safeText(productWaText(item))}">Pedir por WhatsApp</button></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
+          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><a class="pwGhostBtn" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">Pedir por WhatsApp</a></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
         </div>
       </section>
 
@@ -562,7 +403,7 @@ function renderPreview(){
               <div class="pwMiniTag">${Number(item.days||0)} días</div>
               <strong>${safeText(item.name)}</strong>
               <div class="price">${dpFmtMoney(item.price || 0)}</div>
-              <div class="pwProductActions"><button class="pwGhostBtn" type="button" data-wa-message="${safeText(membershipWaText(item))}">Solicitar info</button><button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-add-cart="membership:${item.id}">Agregar</button></div>
+              <a class="pwGhostBtn" href="${waLink(membershipWaText(item)) }" target="_blank" rel="noopener">Solicitar info</a>
             </div>`).join('') : ''}
         </div>
         <div class="pwProductGrid">
@@ -571,25 +412,24 @@ function renderPreview(){
         <div class="pwEmpty" id="pw-catalog-empty" hidden>No hay resultados con ese filtro.</div>
       </section>
 
-      <section class="pwSection" id="pw-catalog-home">
-        <div class="pwSectionHead"><h3>Categorías del catálogo</h3><span class="muted">Cada categoría te lleva a su propia vista con todos los productos</span></div>
-        <div class="pwCategoryLanding">
+      <section class="pwSection">
+        <div class="pwSectionHead"><h3>Catálogo por categoría</h3><span class="muted">Vista organizada para que el cliente encuentre más fácil</span></div>
+        <div class="pwCategoryBlocks">
           ${categories.length ? categories.map(cat=>{
             const items = featuredSorted.filter(item => normalizeCategory(item) === cat);
-            const slug = slugifyCategory(cat);
             return `
-            <a class="pwCategoryLandingCard" href="#cat-${slug}">
-              <div>
-                <small class="muted">Categoría</small>
-                <strong>${safeText(cat)}</strong>
+            <article class="pwCategoryBlock">
+              <div class="pwCategoryBlockHead">
+                <h4>${safeText(cat)}</h4>
+                <span>${items.length} producto${items.length===1?'':'s'}</span>
               </div>
-              <span>${items.length} producto${items.length===1?'':'s'}</span>
-            </a>`;
+              <div class="pwCategoryMiniList">
+                ${items.map(item=>`<div class="pwCategoryMiniItem"><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span></div>`).join('')}
+              </div>
+            </article>`;
           }).join('') : '<div class="pwEmpty">No hay productos suficientes para agrupar por categoría.</div>'}
         </div>
       </section>
-
-      ${buildCategorySections(featuredSorted)}
 
       <section id="pw-promos-preview" class="pwSection">
         <div class="pwSectionHead"><h3>Promociones</h3><span class="muted">Ideal para campañas y flyers</span></div>
@@ -608,44 +448,22 @@ function renderPreview(){
         </div>
       </div>
 
-      
-      <button class="pwCartFloat" id="pw-cart-open" type="button">🛒 Carrito <span id="pw-cart-count">0</span></button>
-      <div id="pw-cart-modal" class="pwModal" hidden>
-        <div class="pwModalBackdrop" data-close-cart></div>
-        <div class="pwModalCard pwModalCard--cart">
-          <button class="pwModalClose" type="button" data-close-cart>&times;</button>
-          <div class="pwCartHead">
-            <div>
-              <strong>Carrito de compra</strong>
-              <div class="muted">Arma tu pedido y envíalo por WhatsApp</div>
-            </div>
-            <button class="pwGhostBtn" type="button" id="pw-cart-clear">Vaciar</button>
-          </div>
-          <div id="pw-cart-empty" class="pwEmpty">Tu carrito está vacío.</div>
-          <div id="pw-cart-items" class="pwCartList"></div>
-          <div class="pwCartSummary">
-            <div><span>Total</span><strong id="pw-cart-total-value">$0.00</strong></div>
-            <button id="pw-cart-send" type="button" class="pwPrimaryBtn is-disabled">Enviar pedido por WhatsApp</button>
-          </div>
-        </div>
-      </div>
-
       <section class="pwContact">
         <div class="pwContactInfo">
           <strong>Contacto</strong>
           <div>${safeText(page.address || biz.address || 'Agrega la dirección del gym.')}</div>
           <div>${safeText(contactPhone || 'Agrega tu teléfono visible.')}</div>
           <div class="pwContactLinks">
-            <button class="pwGhostBtn" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">WhatsApp</button>
+            <a class="pwGhostBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">WhatsApp</a>
             ${mapsUrl ? `<a class="pwGhostBtn" href="${mapsUrl}" target="_blank" rel="noopener">Cómo llegar</a>` : ''}
             ${facebookUrl ? `<a class="pwGhostBtn" href="${facebookUrl}" target="_blank" rel="noopener">Facebook</a>` : ''}
             ${instagramUrl ? `<a class="pwGhostBtn" href="${instagramUrl}" target="_blank" rel="noopener">Instagram</a>` : ''}
           </div>
           ${(facebookUrl || instagramUrl) ? `<div class="pwSocialHandles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}
         </div>
-        <button class="pwPrimaryBtn" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">${safeText(page.ctaText || 'Escríbenos')}</button>
+        <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
       </section>
-      <button class="pwWhatsFloat" type="button" data-wa-message="Hola, quiero información del gym y sus productos." aria-label="WhatsApp">WhatsApp</button>
+      <a class="pwWhatsFloat" href="${waLink('Hola, quiero información del gym y sus productos.') }" target="_blank" rel="noopener" aria-label="WhatsApp">WhatsApp</a>
     `;
     bindPreviewInteractions(featured);
     initCatalogInteractions(target);
@@ -666,7 +484,7 @@ function renderPreview(){
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <p class="muted">Producto destacado de tu catálogo web. Ideal para compartir por WhatsApp.</p>
           <div class="pwProductActions">
-            <button class="pwPrimaryBtn" type="button" data-wa-message="${safeText(productWaText(item))}">Comprar por WhatsApp</button>
+            <a class="pwPrimaryBtn" href="${waLink(productWaText(item))}" target="_blank" rel="noopener">Comprar por WhatsApp</a>
             <button class="pwGhostBtn" type="button" data-close-product-modal>Cerrar</button>
           </div>
         </div>
@@ -690,27 +508,6 @@ function renderPreview(){
     document.querySelectorAll('[data-close-product-modal]').forEach(btn=>{
       btn.onclick = closeProductDetail;
     });
-    document.querySelectorAll('[data-add-cart]').forEach(btn=>{
-      btn.onclick = ()=> {
-        const [kind,id] = String(btn.getAttribute('data-add-cart') || '').split(':');
-        if(kind && id) addToCart(kind, id);
-      };
-    });
-    $('pw-cart-open')?.addEventListener('click', openCart);
-    $('pw-cart-clear')?.addEventListener('click', clearCart);
-    document.querySelectorAll('[data-close-cart]').forEach(btn=> btn.onclick = closeCart);
-    document.querySelectorAll('[data-wa-message]').forEach(btn=>{
-      btn.onclick = (e)=>{
-        e.preventDefault();
-        openWhatsApp(btn.getAttribute('data-wa-message') || 'Hola');
-      };
-    });
-    $('pw-cart-send')?.addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(!previewCart.length) return;
-      openWhatsApp(cartWaText());
-    });
-    renderCart();
   }
 
   function bindInputs(){
@@ -793,7 +590,7 @@ function renderPreview(){
 
   function buildDownloadHtml(){
     const visibleMemberships = catalog.filter(x=>page.membershipsVisible.includes(x.id));
-    const featured = products.filter(x=>page.featuredProducts.includes(x.id)).slice(0,120);
+    const featured = products.filter(x=>page.featuredProducts.includes(x.id)).slice(0,8);
     const promos = (page.promos||[]).filter(Boolean);
     const sales = Array.isArray(state?.sales) ? state.sales : [];
     const topSellingMap = new Map();
@@ -825,55 +622,20 @@ function renderPreview(){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} | ${bizName}</title>
-<style>body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#111}a{text-decoration:none} .wrap{max-width:1120px;margin:0 auto;padding:0 16px} .top{background:#111;color:#fff;padding:10px 0;font-size:14px}.top .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.hero{padding:28px 0;background:linear-gradient(135deg,#fff,#f6f6f6)}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}.logo{width:64px;height:64px;border-radius:18px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c00000;font-weight:800}.logo img{width:100%;height:100%;object-fit:contain}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff1f1;color:#c00000;font-size:12px;font-weight:700;margin-bottom:10px}h1{margin:0 0 8px;font-size:34px;line-height:1.05}p{color:#444}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;font-weight:700}.btn-primary{background:#c00000;color:#fff}.btn-secondary{background:#fff;border:1px solid #ececec;color:#222}.btn-ghost{background:#fff;border:1px solid #ececec;color:#222}.visual-main{height:280px;border-radius:24px;background:#f2f2f2 center/cover no-repeat;border:1px solid #eee;box-shadow:0 16px 32px rgba(0,0,0,.08)}.visual-promo{margin-top:12px;min-height:100px;border-radius:20px;background:#222 center/cover no-repeat;color:#fff;padding:16px;display:flex;align-items:flex-end}.section{padding:24px 0}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap}.head h2{margin:0;font-size:22px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px}.price{font-weight:800;color:#c00000;font-size:18px}.chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff5f5;color:#c00000;font-size:11px;font-weight:800;width:max-content}.product{display:grid;grid-template-columns:118px 1fr;gap:12px;border:1px solid #ececec;border-radius:18px;padding:12px}.media{height:118px;border-radius:14px;background:#f7f7f7;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center}.media img{width:100%;height:100%;object-fit:cover}.promos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.promo{padding:14px;border-radius:18px;background:#fff5f5;border:1px solid #ffd6d6}.cats{display:flex;gap:8px;flex-wrap:wrap}.cats .chip{background:#f5f5f5;color:#555}.mini-list{display:grid;gap:8px}.mini-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid #eee}.contact{padding:20px 0 30px;border-top:1px solid #eee;background:#fafafa}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.social-handles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;color:#666;font-size:13px} .category-landing{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.category-card{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px;border-radius:18px;background:#fafafa;border:1px solid #eee;color:#111}.category-page{padding-top:12px}.topgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.topcard{border:1px solid #ececec;border-radius:18px;overflow:hidden;background:#fff}.topcard .media{height:150px;border:none;border-bottom:1px solid #eee;border-radius:0}.topbody{padding:12px;display:grid;gap:6px}.wa-float{position:fixed;right:18px;bottom:18px;background:#1fa855;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}.actions{display:flex;gap:8px;flex-wrap:wrap}.cart-float{position:fixed;left:18px;bottom:18px;background:#111;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18);border:none}.cart-modal[hidden]{display:none}.cart-modal{position:fixed;inset:0;z-index:70}.cart-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}.cart-card{position:absolute;right:18px;bottom:78px;width:min(420px,calc(100vw - 32px));background:#fff;border-radius:18px;padding:16px;border:1px solid #e8e8e8;box-shadow:0 20px 40px rgba(0,0,0,.18)}.topwa,.pwTopWaBtn{background:none;border:none;color:#fff;font:inherit;padding:0;cursor:pointer}.pwTopWaBtn{text-decoration:underline}.btn[disabled],.is-disabled{opacity:.55;pointer-events:none}@media (max-width:900px){.hero-grid,.grid3,.grid2,.promos,.topgrid{grid-template-columns:1fr}.product{grid-template-columns:1fr}}</style>
+<style>body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#111}a{text-decoration:none} .wrap{max-width:1120px;margin:0 auto;padding:0 16px} .top{background:#111;color:#fff;padding:10px 0;font-size:14px}.top .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.hero{padding:28px 0;background:linear-gradient(135deg,#fff,#f6f6f6)}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}.logo{width:64px;height:64px;border-radius:18px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c00000;font-weight:800}.logo img{width:100%;height:100%;object-fit:contain}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff1f1;color:#c00000;font-size:12px;font-weight:700;margin-bottom:10px}h1{margin:0 0 8px;font-size:34px;line-height:1.05}p{color:#444}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;font-weight:700}.btn-primary{background:#c00000;color:#fff}.btn-secondary{background:#fff;border:1px solid #ececec;color:#222}.btn-ghost{background:#fff;border:1px solid #ececec;color:#222}.visual-main{height:280px;border-radius:24px;background:#f2f2f2 center/cover no-repeat;border:1px solid #eee;box-shadow:0 16px 32px rgba(0,0,0,.08)}.visual-promo{margin-top:12px;min-height:100px;border-radius:20px;background:#222 center/cover no-repeat;color:#fff;padding:16px;display:flex;align-items:flex-end}.section{padding:24px 0}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap}.head h2{margin:0;font-size:22px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px}.price{font-weight:800;color:#c00000;font-size:18px}.chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff5f5;color:#c00000;font-size:11px;font-weight:800;width:max-content}.product{display:grid;grid-template-columns:118px 1fr;gap:12px;border:1px solid #ececec;border-radius:18px;padding:12px}.media{height:118px;border-radius:14px;background:#f7f7f7;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center}.media img{width:100%;height:100%;object-fit:cover}.promos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.promo{padding:14px;border-radius:18px;background:#fff5f5;border:1px solid #ffd6d6}.cats{display:flex;gap:8px;flex-wrap:wrap}.cats .chip{background:#f5f5f5;color:#555}.mini-list{display:grid;gap:8px}.mini-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid #eee}.contact{padding:20px 0 30px;border-top:1px solid #eee;background:#fafafa}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.social-handles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;color:#666;font-size:13px}.topgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.topcard{border:1px solid #ececec;border-radius:18px;overflow:hidden;background:#fff}.topcard .media{height:150px;border:none;border-bottom:1px solid #eee;border-radius:0}.topbody{padding:12px;display:grid;gap:6px}.wa-float{position:fixed;right:18px;bottom:18px;background:#1fa855;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}@media (max-width:900px){.hero-grid,.grid3,.grid2,.promos,.topgrid{grid-template-columns:1fr}.product{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <div class="top"><div class="wrap"><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div></div></div>
 <section class="hero"><div class="wrap hero-grid"><div><span class="badge">Página oficial</span><div class="brand"><div class="logo">${biz.logoDataUrl ? `<img src="${biz.logoDataUrl}" alt="logo">` : bizName.slice(0,2).toUpperCase()}</div><div><strong>${bizName}</strong><div style="color:#666;font-size:14px">${safeText(page.tagline || '')}</div></div></div><h1>${title}</h1><p>${safeText(page.subtitle || '')}</p><div class="actions"><a class="btn btn-primary" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos por WhatsApp')}</a><a class="btn btn-secondary" href="#promociones">${safeText(page.ctaSecondary || 'Ver promociones')}</a></div></div><div><div class="visual-main" style="background-image:url('${page.heroImage||''}')"></div><div class="visual-promo" style="background-image:url('${page.secondaryImage||''}')"><div><small>Promo destacada</small><div>${safeText(promos[0] || 'Tu promoción especial aquí')}</div></div></div></div></div></section>
-<section class="section"><div class="wrap"><div class="head"><h2>Membresías</h2></div><div class="grid3">${visibleMemberships.map(item=>`<article class="card" data-membership-card data-name="${safeText(item.name)}"><span class="chip">${Number(item.days||0)} días</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><button type="button" class="btn btn-secondary" data-wa-message="${safeText(membershipWaText(item))}">Me interesa</button><button type="button" class="btn btn-primary" data-add-cart="membership:${item.id}" data-item-name="${safeText(item.name)}" data-item-price="${Number(item.price||0)||0}" data-item-meta="${safeText(Number(item.days||0)+' días')}">Agregar</button></div></article>`).join('') || '<div class="card">Sin membresías visibles.</div>'}</div></div></section>
+<section class="section"><div class="wrap"><div class="head"><h2>Membresías</h2></div><div class="grid3">${visibleMemberships.map(item=>`<article class="card"><span class="chip">${Number(item.days||0)} días</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><a class="btn btn-primary" href="${waLink(membershipWaText(item))}" target="_blank">Me interesa</a></article>`).join('') || '<div class="card">Sin membresías visibles.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Lo más vendido</h2></div><div class="topgrid">${topSelling.map(({item,sold})=>`<article class="topcard"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:'IMG'}</div><div class="topbody"><span class="chip">Top venta</span><strong>${safeText(item.name)}</strong><small>${sold} piezas vendidas</small><div class="price">${dpFmtMoney(item.price||0)}</div></div></article>`).join('') || '<div class="card">Sin historial suficiente.</div>'}</div></div></section>
-<section class="section"><div class="wrap"><div class="head"><h2>Categorías</h2><small>Entra a una vista completa por categoría</small></div><div class="category-landing">${categories.map(cat=>{const slug=slugifyCategory(cat);const count=featuredSorted.filter(item=>normalizeCategory(item)===cat).length;return `<a class="category-card" href="#cat-${slug}"><div><small>Categoría</small><strong>${safeText(cat)}</strong></div><span>${count} producto${count===1?'':'s'}</span></a>`;}).join('') || '<span class="chip">Sin categorías</span>'}</div></div></section>
-<section id="catalogo" class="section"><div class="wrap"><div class="head"><h2>Productos destacados</h2><small>Selección principal del catálogo</small></div><div class="grid2">${featuredSorted.slice(0,4).map(item=>`<article class="product" data-product-card data-name="${safeText(item.name)}" data-category="${normalizeCategory(item)}"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:productFallback(item)}</div><div><span class="chip">${normalizeCategory(item)}</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><button type="button" class="btn btn-secondary" data-wa-message="${safeText(productWaText(item))}">Comprar por WhatsApp</button><button type="button" class="btn btn-primary" data-add-cart="product:${item.id}" data-item-name="${safeText(item.name)}" data-item-price="${Number(item.price||0)||0}" data-item-meta="${normalizeCategory(item)}">Agregar</button></div></div></article>`).join('') || '<div class="card">Sin productos destacados.</div>'}</div></div></section>
+<section class="section"><div class="wrap"><div class="head"><h2>Categorías</h2></div><div class="cats">${categories.map(cat=>`<span class="chip">${safeText(cat)}</span>`).join('') || '<span class="chip">Sin categorías</span>'}</div></div></section>
+<section class="section"><div class="wrap"><div class="head"><h2>Productos destacados</h2><small>Selección principal del catálogo</small></div><div class="grid2">${featuredSorted.slice(0,4).map(item=>`<article class="product"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:productFallback(item)}</div><div><span class="chip">${normalizeCategory(item)}</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><a class="btn btn-primary" href="${waLink(productWaText(item))}" target="_blank">Comprar por WhatsApp</a></div></div></article>`).join('') || '<div class="card">Sin productos destacados.</div>'}</div></div></section>
 <section class="section"><div class="wrap"><div class="head"><h2>Nuevos ingresos</h2><small>Novedades y productos listos para mover</small></div><div class="topgrid">${newestProducts.map(item=>`<article class="topcard"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:'IMG'}</div><div class="topbody"><span class="chip">Nuevo</span><strong>${safeText(item.name)}</strong><small>${safeText(normalizeCategory(item))}</small><div class="price">${dpFmtMoney(item.price||0)}</div></div></article>`).join('') || '<div class="card">Sin productos nuevos.</div>'}</div></div></section>
-${categories.map(cat=>{const slug=slugifyCategory(cat);const items=featuredSorted.filter(item=>normalizeCategory(item)===cat);return `<section id="cat-${slug}" class="section category-page"><div class="wrap"><div class="head"><h2>${safeText(cat)}</h2><a class="btn btn-ghost" href="#catalogo">Volver al catálogo</a></div><div class="grid2">${items.map(item=>`<article class="product" data-product-card data-name="${safeText(item.name)}" data-category="${normalizeCategory(item)}"><div class="media">${getProductImage(item)?`<img src="${getProductImage(item)}" alt="${safeText(item.name)}">`:productFallback(item)}</div><div><span class="chip">${normalizeCategory(item)}</span><h3>${safeText(item.name)}</h3><div class="price">${dpFmtMoney(item.price||0)}</div><div class="actions"><button type="button" class="btn btn-secondary" data-wa-message="${safeText(productWaText(item))}">Comprar por WhatsApp</button><button type="button" class="btn btn-primary" data-add-cart="product:${item.id}" data-item-name="${safeText(item.name)}" data-item-price="${Number(item.price||0)||0}" data-item-meta="${normalizeCategory(item)}">Agregar</button></div></div></article>`).join('')}</div></div></section>`;}).join('') || '<div class="card">Sin categorías.</div>'}
+<section class="section"><div class="wrap"><div class="head"><h2>Catálogo por categoría</h2></div>${categories.map(cat=>`<article class="card" style="margin-bottom:12px"><div class="head"><h2 style="font-size:18px">${safeText(cat)}</h2><small>Mini página de categoría</small></div><div class="mini-list">${featuredSorted.filter(item=>normalizeCategory(item)===cat).map(item=>`<div class="mini-item"><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price||0)}</span></div>`).join('')}</div></article>`).join('') || '<div class="card">Sin categorías.</div>'}</div></section>
 <section class="section" id="promociones"><div class="wrap"><div class="head"><h2>Promociones</h2></div><div class="promos">${promos.map((text,idx)=>`<article class="promo"><small>Promo ${idx+1}</small><strong>${safeText(text)}</strong></article>`).join('') || '<div class="card">Sin promociones.</div>'}</div></div></section>
-<button class="wa-float" type="button" data-wa-message="Hola, quiero información del gym y sus productos.">WhatsApp</button>
-<button class="cart-float" id="cart-open" type="button">🛒 Carrito <span id="cart-count">0</span></button>
-<div id="cart-modal" class="cart-modal" hidden><div class="cart-backdrop" data-close-cart></div><div class="cart-card"><button class="btn btn-ghost" type="button" data-close-cart>Cerrar</button><h3>Carrito de compra</h3><div id="cart-empty" class="card">Tu carrito está vacío.</div><div id="cart-items" class="mini-list"></div><div class="card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><strong>Total</strong><div id="cart-total">$0.00</div></div><div class="actions"><button id="cart-clear" type="button" class="btn btn-ghost">Vaciar</button><button id="cart-send" type="button" class="btn btn-primary">Enviar pedido por WhatsApp</button></div></div></div></div>
-<section class="contact"><div class="wrap" style="display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><strong>Contacto</strong><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div><div class="contact-links"><button class="btn btn-ghost" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">WhatsApp</button>${mapsUrl ? `<a class="btn btn-ghost" href="${mapsUrl}" target="_blank">Cómo llegar</a>` : ''}${facebookUrl ? `<a class="btn btn-ghost" href="${facebookUrl}" target="_blank">Facebook</a>` : ''}${instagramUrl ? `<a class="btn btn-ghost" href="${instagramUrl}" target="_blank">Instagram</a>` : ''}</div>${(facebookUrl || instagramUrl) ? `<div class="social-handles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}</div><button class="btn btn-primary" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">${safeText(page.ctaText || 'Escríbenos')}</button></div></section>
-<script>(function(){
-const rawPhone = ${JSON.stringify(page.whatsapp || page.phone || biz.phone || '')};
-function normalizePhone(raw){ let num=String(raw||'').replace(/\D+/g,''); if(!num) return ''; if(num.length===10) num='521'+num; else if(num.length===12 && num.startsWith('52')) num='521'+num.slice(2); return num; }
-const phone = normalizePhone(rawPhone);
-function openWA(message){ if(!phone){ alert('Configura un teléfono o WhatsApp válido en la página.'); return; } const url='https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(message||'Hola'); window.open(url,'_blank','noopener,noreferrer'); }
-const search=document.getElementById('catalog-search');
-const chips=[].slice.call(document.querySelectorAll('[data-filter]'));
-const products=[].slice.call(document.querySelectorAll('[data-product-card]'));
-const memberships=[].slice.call(document.querySelectorAll('[data-membership-card]'));
-let currentFilter='Todo';
-function apply(){ const q=(search && search.value ? search.value : '').trim().toLowerCase(); products.forEach(function(card){ const name=(card.dataset.name||'').toLowerCase(); const cat=(card.dataset.category||''); const show=(currentFilter==='Todo'||currentFilter===cat)&&(!q||name.includes(q)||cat.toLowerCase().includes(q)); card.style.display=show?'':'none'; }); memberships.forEach(function(card){ const name=(card.dataset.name||'').toLowerCase(); const show=(currentFilter==='Todo'||currentFilter==='Membresías')&&(!q||name.includes(q)); card.style.display=show?'':'none'; }); }
-if(search) search.addEventListener('input',apply);
-chips.forEach(function(chip){ chip.addEventListener('click',function(){ currentFilter=chip.dataset.filter||'Todo'; chips.forEach(function(x){ x.classList.toggle('active', x===chip); }); apply(); }); });
-apply();
-document.querySelectorAll('[data-wa-message]').forEach(function(btn){ btn.addEventListener('click',function(e){ e.preventDefault(); openWA(btn.dataset.waMessage||'Hola'); }); });
-var cart=[];
-function money(n){ return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n||0)); }
-function totals(){ return cart.reduce(function(acc,it){ acc.count+=it.qty; acc.total+=it.qty*it.price; return acc; }, {count:0,total:0}); }
-function renderCart(){ var countEl=document.getElementById('cart-count'); var itemsEl=document.getElementById('cart-items'); var emptyEl=document.getElementById('cart-empty'); var totalEl=document.getElementById('cart-total'); var t=totals(); if(countEl) countEl.textContent=String(t.count); if(totalEl) totalEl.textContent=money(t.total); if(itemsEl){ itemsEl.innerHTML=cart.map(function(it){ return '<div class="mini-item"><div><strong>'+it.name+'</strong><div style="color:#666;font-size:12px">'+(it.meta||'')+'</div></div><div style="display:grid;gap:6px;justify-items:end"><div>'+money(it.qty*it.price)+'</div><div class="actions"><button type="button" class="btn btn-ghost cart-dec" data-key="'+it.key+'">-</button><span>'+it.qty+'</span><button type="button" class="btn btn-ghost cart-inc" data-key="'+it.key+'">+</button></div></div></div>'; }).join(''); itemsEl.querySelectorAll('.cart-inc').forEach(function(b){ b.onclick=function(){ changeQty(b.dataset.key,1); }; }); itemsEl.querySelectorAll('.cart-dec').forEach(function(b){ b.onclick=function(){ changeQty(b.dataset.key,-1); }; }); } if(emptyEl) emptyEl.style.display=cart.length?'none':''; }
-function addToCart(btn){ var key=btn.dataset.addCart; var existing=cart.find(function(x){ return x.key===key; }); if(existing){ existing.qty+=1; } else { cart.push({ key:key, name:btn.dataset.itemName||'Producto', price:Number(btn.dataset.itemPrice||0)||0, meta:btn.dataset.itemMeta||'', qty:1 }); } renderCart(); }
-function changeQty(key,delta){ var item=cart.find(function(x){ return x.key===key; }); if(!item) return; item.qty+=delta; if(item.qty<=0){ cart=cart.filter(function(x){ return x.key!==key; }); } renderCart(); }
-function clearCart(){ cart=[]; renderCart(); }
-function openCart(){ var modal=document.getElementById('cart-modal'); if(modal) modal.hidden=false; }
-function closeCart(){ var modal=document.getElementById('cart-modal'); if(modal) modal.hidden=true; }
-document.querySelectorAll('[data-add-cart]').forEach(function(btn){ btn.addEventListener('click',function(){ addToCart(btn); }); });
-document.getElementById('cart-open') && document.getElementById('cart-open').addEventListener('click',openCart);
-document.querySelectorAll('[data-close-cart]').forEach(function(btn){ btn.addEventListener('click',closeCart); });
-document.getElementById('cart-clear') && document.getElementById('cart-clear').addEventListener('click',clearCart);
-document.getElementById('cart-send') && document.getElementById('cart-send').addEventListener('click',function(){ if(!cart.length) return; var lines=cart.map(function(it){ return '- '+it.name+' x'+it.qty+' '+money(it.qty*it.price); }); openWA('Hola, quiero hacer este pedido:
-
-'+lines.join('\n')+'\n\nTotal: '+money(totals().total)); });
-renderCart();
-})();</script></body></html>`;
+<section class="contact"><div class="wrap" style="display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap"><div><strong>Contacto</strong><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div><div class="contact-links"><a class="btn btn-ghost" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">WhatsApp</a>${mapsUrl ? `<a class="btn btn-ghost" href="${mapsUrl}" target="_blank">Cómo llegar</a>` : ''}${facebookUrl ? `<a class="btn btn-ghost" href="${facebookUrl}" target="_blank">Facebook</a>` : ''}${instagramUrl ? `<a class="btn btn-ghost" href="${instagramUrl}" target="_blank">Instagram</a>` : ''}</div>${(facebookUrl || instagramUrl) ? `<div class="social-handles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}</div><a class="btn btn-primary" href="${waLink('Hola, quiero información para entrenar o comprar productos.')}" target="_blank">${safeText(page.ctaText || 'Escríbenos')}</a></div></section><a class="wa-float" href="${waLink('Hola, quiero información del gym y sus productos.')}" target="_blank">WhatsApp</a>
+<script>(function(){const search=document.getElementById('catalog-search');const chips=[...document.querySelectorAll('[data-filter]')];const p=[...document.querySelectorAll('[data-product-card]')];const m=[...document.querySelectorAll('[data-membership-card]')];const empty=document.getElementById('catalog-empty');let filter='Todo';function apply(){const q=(search?.value||'').trim().toLowerCase();let visible=0;p.forEach(card=>{const name=(card.dataset.name||'').toLowerCase();const cat=(card.dataset.category||'');const show=(filter==='Todo'||filter===cat)&&(!q||name.includes(q)||cat.toLowerCase().includes(q));card.hidden=!show;if(show)visible++;});m.forEach(card=>{const name=(card.dataset.name||'').toLowerCase();const show=(filter==='Todo'||filter==='Membresías')&&(!q||name.includes(q)||'membresías'.includes(q)||'membresias'.includes(q));card.hidden=!show;if(show)visible++;});if(empty)empty.hidden=visible!==0;}search&&search.addEventListener('input',apply);chips.forEach(ch=>ch.addEventListener('click',()=>{filter=ch.dataset.filter||'Todo';chips.forEach(x=>x.classList.toggle('active',x===ch));apply();}));apply();})();</script></body></html>`;
   }
 
   function downloadCurrentPage(){
@@ -910,7 +672,7 @@ renderCart();
         instagram: page.instagram,
         mapsUrl: page.mapsUrl,
         membershipsVisible: (page.membershipsVisible || []).slice(),
-        featuredProducts: (page.featuredProducts || []).slice(0,120),
+        featuredProducts: (page.featuredProducts || []).slice(0,8),
         promos: (page.promos || []).slice(0,3)
       };
       return st;
