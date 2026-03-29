@@ -90,7 +90,12 @@
   function cartWaText(){
     const { total } = cartTotals();
     const lines = previewCart.map(it=>`- ${it.name} x${it.qty} ${dpFmtMoney((it.qty||0)*(it.price||0))}`);
-    return `Hola, quiero hacer este pedido:%0A%0A${lines.join('%0A')}%0A%0ATotal: ${encodeURIComponent(dpFmtMoney(total))}`;
+    return `Hola, quiero hacer este pedido:
+
+${lines.join('
+')}
+
+Total: ${dpFmtMoney(total)}`;
   }
 
   function renderCart(){
@@ -124,10 +129,8 @@
     if(empty) empty.hidden = previewCart.length !== 0;
     if(sendBtn){
       if(previewCart.length){
-        sendBtn.href = waLink(decodeURIComponent(cartWaText()));
         sendBtn.classList.remove('is-disabled');
       } else {
-        sendBtn.href = '#';
         sendBtn.classList.add('is-disabled');
       }
     }
@@ -314,7 +317,16 @@
   function waLink(text){
     const num = normalizeWhatsAppNumber(page.whatsapp || page.phone || biz.phone || '');
     if(!num) return '#';
-    return `https://wa.me/${num}?text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
+    return `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(text || 'Hola, quiero información de Dinamita Gym.')}`;
+  }
+
+  function openWhatsApp(text){
+    const url = waLink(text);
+    if(!url || url === '#'){
+      alert('Configura un teléfono o WhatsApp válido en Página Web.');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   function getProductImage(item){
@@ -351,7 +363,7 @@ Precio: ${dpFmtMoney(item.price || 0)}`;
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <div class="pwProductActions">
             <button class="pwGhostBtn" type="button" data-product-detail="${item.id}">Ver detalle</button>
-            <a class="pwPrimaryBtn pwPrimaryBtn--small" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">WhatsApp</a><button class="pwSecondaryBtn pwPrimaryBtn--small" type="button" data-add-cart="product:${item.id}">Agregar</button>
+            <button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-wa-message="${safeText(productWaText(item))}">WhatsApp</button><button class="pwSecondaryBtn pwPrimaryBtn--small" type="button" data-add-cart="product:${item.id}">Agregar</button>
           </div>
         </div>
       </div>`;
@@ -468,7 +480,7 @@ function renderPreview(){
     target.innerHTML = `
       <div class="pwTopBar">
         <span>${safeText(page.trustText || '')}</span>
-        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<a href="${waLink('Hola, quiero información del gym.') }" target="_blank" rel="noopener">WhatsApp</a></div>
+        <div class="pwTopBarLinks">${contactPhone ? `<a href="tel:${safeText(contactPhone)}">${safeText(contactPhone)}</a>` : ''}<button type="button" class="pwTopWaBtn" data-wa-message="Hola, quiero información del gym.">WhatsApp</button></div>
       </div>
       <div class="pwHero">
         <div class="pwHeroGrid">
@@ -484,7 +496,7 @@ function renderPreview(){
             <h2>${safeText(page.title || '')}</h2>
             <p>${safeText(page.subtitle || '')}</p>
             <div class="pwHeroActions">
-              <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información del gym y sus promociones.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
+              <button class="pwPrimaryBtn" type="button" data-wa-message="Hola, quiero información del gym y sus promociones.">${safeText(page.ctaText || 'Escríbenos')}</button>
               <a class="pwSecondaryBtn" href="#pw-promos-preview">${safeText(page.ctaSecondary || 'Ver promociones')}</a>
             </div>
             <div class="pwTrustRow">
@@ -508,7 +520,7 @@ function renderPreview(){
       <section class="pwSection">
         <div class="pwSectionHead"><h3>Ofertas de la semana</h3><span class="muted">Empuja tus promociones y productos estrella</span></div>
         <div class="pwOfferGrid">
-          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><a class="pwGhostBtn" href="${waLink(productWaText(item)) }" target="_blank" rel="noopener">Pedir por WhatsApp</a></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
+          ${featured.slice(0,3).length ? featured.slice(0,3).map((item,idx)=>`<article class="pwOfferCard"><small>${idx===0?'Oferta principal':'Destacado'}</small><strong>${safeText(item.name)}</strong><span>${dpFmtMoney(item.price || 0)}</span><button class="pwGhostBtn" type="button" data-wa-message="${safeText(productWaText(item))}">Pedir por WhatsApp</button></article>`).join('') : '<div class="pwEmpty">Agrega productos destacados para crear ofertas.</div>'}
         </div>
       </section>
 
@@ -550,7 +562,7 @@ function renderPreview(){
               <div class="pwMiniTag">${Number(item.days||0)} días</div>
               <strong>${safeText(item.name)}</strong>
               <div class="price">${dpFmtMoney(item.price || 0)}</div>
-              <div class="pwProductActions"><a class="pwGhostBtn" href="${waLink(membershipWaText(item)) }" target="_blank" rel="noopener">Solicitar info</a><button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-add-cart="membership:${item.id}">Agregar</button></div>
+              <div class="pwProductActions"><button class="pwGhostBtn" type="button" data-wa-message="${safeText(membershipWaText(item))}">Solicitar info</button><button class="pwPrimaryBtn pwPrimaryBtn--small" type="button" data-add-cart="membership:${item.id}">Agregar</button></div>
             </div>`).join('') : ''}
         </div>
         <div class="pwProductGrid">
@@ -613,7 +625,7 @@ function renderPreview(){
           <div id="pw-cart-items" class="pwCartList"></div>
           <div class="pwCartSummary">
             <div><span>Total</span><strong id="pw-cart-total-value">$0.00</strong></div>
-            <a id="pw-cart-send" class="pwPrimaryBtn is-disabled" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+            <button id="pw-cart-send" type="button" class="pwPrimaryBtn is-disabled">Enviar pedido por WhatsApp</button>
           </div>
         </div>
       </div>
@@ -624,16 +636,16 @@ function renderPreview(){
           <div>${safeText(page.address || biz.address || 'Agrega la dirección del gym.')}</div>
           <div>${safeText(contactPhone || 'Agrega tu teléfono visible.')}</div>
           <div class="pwContactLinks">
-            <a class="pwGhostBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="pwGhostBtn" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">WhatsApp</button>
             ${mapsUrl ? `<a class="pwGhostBtn" href="${mapsUrl}" target="_blank" rel="noopener">Cómo llegar</a>` : ''}
             ${facebookUrl ? `<a class="pwGhostBtn" href="${facebookUrl}" target="_blank" rel="noopener">Facebook</a>` : ''}
             ${instagramUrl ? `<a class="pwGhostBtn" href="${instagramUrl}" target="_blank" rel="noopener">Instagram</a>` : ''}
           </div>
           ${(facebookUrl || instagramUrl) ? `<div class="pwSocialHandles">${facebookUrl ? `<span>${safeText(socialLabel(facebookUrl))}</span>` : ''}${instagramUrl ? `<span>${safeText(socialLabel(instagramUrl))}</span>` : ''}</div>` : ''}
         </div>
-        <a class="pwPrimaryBtn" href="${waLink('Hola, quiero información para entrenar o comprar productos.') }" target="_blank" rel="noopener">${safeText(page.ctaText || 'Escríbenos')}</a>
+        <button class="pwPrimaryBtn" type="button" data-wa-message="Hola, quiero información para entrenar o comprar productos.">${safeText(page.ctaText || 'Escríbenos')}</button>
       </section>
-      <a class="pwWhatsFloat" href="${waLink('Hola, quiero información del gym y sus productos.') }" target="_blank" rel="noopener" aria-label="WhatsApp">WhatsApp</a>
+      <button class="pwWhatsFloat" type="button" data-wa-message="Hola, quiero información del gym y sus productos." aria-label="WhatsApp">WhatsApp</button>
     `;
     bindPreviewInteractions(featured);
     initCatalogInteractions(target);
@@ -654,7 +666,7 @@ function renderPreview(){
           <div class="pwProductPrice">${dpFmtMoney(item.price || 0)}</div>
           <p class="muted">Producto destacado de tu catálogo web. Ideal para compartir por WhatsApp.</p>
           <div class="pwProductActions">
-            <a class="pwPrimaryBtn" href="${waLink(productWaText(item))}" target="_blank" rel="noopener">Comprar por WhatsApp</a>
+            <button class="pwPrimaryBtn" type="button" data-wa-message="${safeText(productWaText(item))}">Comprar por WhatsApp</button>
             <button class="pwGhostBtn" type="button" data-close-product-modal>Cerrar</button>
           </div>
         </div>
@@ -687,8 +699,16 @@ function renderPreview(){
     $('pw-cart-open')?.addEventListener('click', openCart);
     $('pw-cart-clear')?.addEventListener('click', clearCart);
     document.querySelectorAll('[data-close-cart]').forEach(btn=> btn.onclick = closeCart);
+    document.querySelectorAll('[data-wa-message]').forEach(btn=>{
+      btn.onclick = (e)=>{
+        e.preventDefault();
+        openWhatsApp(btn.getAttribute('data-wa-message') || 'Hola');
+      };
+    });
     $('pw-cart-send')?.addEventListener('click', (e)=>{
-      if(!previewCart.length){ e.preventDefault(); return; }
+      e.preventDefault();
+      if(!previewCart.length) return;
+      openWhatsApp(cartWaText());
     });
     renderCart();
   }
@@ -805,7 +825,7 @@ function renderPreview(){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} | ${bizName}</title>
-<style>body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#111}a{text-decoration:none} .wrap{max-width:1120px;margin:0 auto;padding:0 16px} .top{background:#111;color:#fff;padding:10px 0;font-size:14px}.top .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.hero{padding:28px 0;background:linear-gradient(135deg,#fff,#f6f6f6)}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}.logo{width:64px;height:64px;border-radius:18px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c00000;font-weight:800}.logo img{width:100%;height:100%;object-fit:contain}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff1f1;color:#c00000;font-size:12px;font-weight:700;margin-bottom:10px}h1{margin:0 0 8px;font-size:34px;line-height:1.05}p{color:#444}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;font-weight:700}.btn-primary{background:#c00000;color:#fff}.btn-secondary{background:#fff;border:1px solid #ececec;color:#222}.btn-ghost{background:#fff;border:1px solid #ececec;color:#222}.visual-main{height:280px;border-radius:24px;background:#f2f2f2 center/cover no-repeat;border:1px solid #eee;box-shadow:0 16px 32px rgba(0,0,0,.08)}.visual-promo{margin-top:12px;min-height:100px;border-radius:20px;background:#222 center/cover no-repeat;color:#fff;padding:16px;display:flex;align-items:flex-end}.section{padding:24px 0}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap}.head h2{margin:0;font-size:22px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px}.price{font-weight:800;color:#c00000;font-size:18px}.chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff5f5;color:#c00000;font-size:11px;font-weight:800;width:max-content}.product{display:grid;grid-template-columns:118px 1fr;gap:12px;border:1px solid #ececec;border-radius:18px;padding:12px}.media{height:118px;border-radius:14px;background:#f7f7f7;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center}.media img{width:100%;height:100%;object-fit:cover}.promos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.promo{padding:14px;border-radius:18px;background:#fff5f5;border:1px solid #ffd6d6}.cats{display:flex;gap:8px;flex-wrap:wrap}.cats .chip{background:#f5f5f5;color:#555}.mini-list{display:grid;gap:8px}.mini-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid #eee}.contact{padding:20px 0 30px;border-top:1px solid #eee;background:#fafafa}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.social-handles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;color:#666;font-size:13px} .category-landing{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.category-card{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px;border-radius:18px;background:#fafafa;border:1px solid #eee;color:#111}.category-page{padding-top:12px}.topgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.topcard{border:1px solid #ececec;border-radius:18px;overflow:hidden;background:#fff}.topcard .media{height:150px;border:none;border-bottom:1px solid #eee;border-radius:0}.topbody{padding:12px;display:grid;gap:6px}.wa-float{position:fixed;right:18px;bottom:18px;background:#1fa855;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}@media (max-width:900px){.hero-grid,.grid3,.grid2,.promos,.topgrid{grid-template-columns:1fr}.product{grid-template-columns:1fr}}</style>
+<style>body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#111}a{text-decoration:none} .wrap{max-width:1120px;margin:0 auto;padding:0 16px} .top{background:#111;color:#fff;padding:10px 0;font-size:14px}.top .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.hero{padding:28px 0;background:linear-gradient(135deg,#fff,#f6f6f6)}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}.logo{width:64px;height:64px;border-radius:18px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c00000;font-weight:800}.logo img{width:100%;height:100%;object-fit:contain}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff1f1;color:#c00000;font-size:12px;font-weight:700;margin-bottom:10px}h1{margin:0 0 8px;font-size:34px;line-height:1.05}p{color:#444}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;font-weight:700}.btn-primary{background:#c00000;color:#fff}.btn-secondary{background:#fff;border:1px solid #ececec;color:#222}.btn-ghost{background:#fff;border:1px solid #ececec;color:#222}.visual-main{height:280px;border-radius:24px;background:#f2f2f2 center/cover no-repeat;border:1px solid #eee;box-shadow:0 16px 32px rgba(0,0,0,.08)}.visual-promo{margin-top:12px;min-height:100px;border-radius:20px;background:#222 center/cover no-repeat;color:#fff;padding:16px;display:flex;align-items:flex-end}.section{padding:24px 0}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap}.head h2{margin:0;font-size:22px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px}.price{font-weight:800;color:#c00000;font-size:18px}.chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff5f5;color:#c00000;font-size:11px;font-weight:800;width:max-content}.product{display:grid;grid-template-columns:118px 1fr;gap:12px;border:1px solid #ececec;border-radius:18px;padding:12px}.media{height:118px;border-radius:14px;background:#f7f7f7;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center}.media img{width:100%;height:100%;object-fit:cover}.promos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.promo{padding:14px;border-radius:18px;background:#fff5f5;border:1px solid #ffd6d6}.cats{display:flex;gap:8px;flex-wrap:wrap}.cats .chip{background:#f5f5f5;color:#555}.mini-list{display:grid;gap:8px}.mini-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid #eee}.contact{padding:20px 0 30px;border-top:1px solid #eee;background:#fafafa}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.social-handles{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;color:#666;font-size:13px} .category-landing{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.category-card{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px;border-radius:18px;background:#fafafa;border:1px solid #eee;color:#111}.category-page{padding-top:12px}.topgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.topcard{border:1px solid #ececec;border-radius:18px;overflow:hidden;background:#fff}.topcard .media{height:150px;border:none;border-bottom:1px solid #eee;border-radius:0}.topbody{padding:12px;display:grid;gap:6px}.wa-float{position:fixed;right:18px;bottom:18px;background:#1fa855;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18)}.actions{display:flex;gap:8px;flex-wrap:wrap}.cart-float{position:fixed;left:18px;bottom:18px;background:#111;color:#fff;padding:14px 18px;border-radius:999px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.18);border:none}.cart-modal[hidden]{display:none}.cart-modal{position:fixed;inset:0;z-index:70}.cart-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}.cart-card{position:absolute;right:18px;bottom:78px;width:min(420px,calc(100vw - 32px));background:#fff;border-radius:18px;padding:16px;border:1px solid #e8e8e8;box-shadow:0 20px 40px rgba(0,0,0,.18)}.topwa,.pwTopWaBtn{background:none;border:none;color:#fff;font:inherit;padding:0;cursor:pointer}.pwTopWaBtn{text-decoration:underline}.btn[disabled],.is-disabled{opacity:.55;pointer-events:none}@media (max-width:900px){.hero-grid,.grid3,.grid2,.promos,.topgrid{grid-template-columns:1fr}.product{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <div class="top"><div class="wrap"><div>${safeText(page.address || biz.address || '')}</div><div>${safeText(contactPhone || '')}</div></div></div>
