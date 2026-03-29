@@ -48,7 +48,7 @@
             <div><strong>Preview modular:</strong> activo</div>
             <div><strong>Productos en TPV:</strong> <span id="pg2-productsCount">0</span></div>
             <div><strong>Categorías reales:</strong> activas</div>
-            <div><strong>Carrito 2.0:</strong> pendiente en V25.3</div>
+            <div><strong>Carrito 2.0:</strong> activo · WhatsApp estable en V25.4</div>
           </div>
           <label>Límite de catálogo visible</label>
           <input id="pg2-limit" class="input" type="number" min="1" max="120" value="24">
@@ -81,18 +81,30 @@
           <input id="pg2-phone" class="input" placeholder="5612345678">
           <label>Dirección</label>
           <textarea id="pg2-address" class="input" rows="3" placeholder="Dirección visible"></textarea>
+          <label>Horario</label>
+          <input id="pg2-hours" class="input" placeholder="Lun a Dom · 6:00 AM a 10:00 PM">
+          <label>Enlace Google Maps</label>
+          <input id="pg2-maps" class="input" placeholder="https://maps.google.com/...">
+          <label>Facebook</label>
+          <input id="pg2-facebook" class="input" placeholder="https://facebook.com/...">
+          <label>Instagram</label>
+          <input id="pg2-instagram" class="input" placeholder="https://instagram.com/...">
         </section>
 
         <section class="pg2__panel" data-panel="exportacion">
           <div class="pg2__exportBox">
-            <strong>Base modular lista</strong>
-            <p class="muted">V25.0 no exporta todavía. Esta versión prepara la arquitectura para preview modular y exportación formal en fases siguientes.</p>
+            <strong>Exportación formal</strong>
+            <p class="muted">Esta versión ya exporta una página web formal generada desde la base modular de Página 2.0.</p>
             <ul class="pg2__checklist">
-              <li>Estado central</li>
-              <li>Secciones separadas</li>
-              <li>Render por bloques</li>
-              <li>Ruta para ZIP formal</li>
+              <li>HTML autónomo</li>
+              <li>Catálogo, categorías y carrito</li>
+              <li>WhatsApp y contacto</li>
+              <li>JSON de respaldo</li>
             </ul>
+            <div class="pg2__actions" style="margin-top:12px">
+              <button id="pg2-export-html" class="btn" type="button">Descargar página HTML</button>
+              <button id="pg2-export-json" class="btn btn--ghost" type="button">Descargar JSON</button>
+            </div>
           </div>
         </section>
       </div>
@@ -101,7 +113,7 @@
     <section class="pg2__preview card">
       <div class="pg2__previewHead">
         <h3>Vista previa modular</h3>
-        <span class="pg2__previewTag">V25.2</span>
+        <span class="pg2__previewTag">V25.4</span>
       </div>
       <div id="pg2-preview" class="pg2__previewCanvas"></div>
     </section>
